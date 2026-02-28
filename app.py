@@ -457,7 +457,7 @@ def prediction_page():
         section[data-testid="stSidebar"] h3,
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] p {
-        color: white !important;
+        color: black !important;
         font-weight: 600;
         }
 
@@ -467,7 +467,7 @@ def prediction_page():
         backdrop-filter: blur(15px);
         border-radius: 14px !important;
         border: 1.5px solid rgba(255,255,255,0.35) !important;
-        color: black !important;
+        color: white !important;
         }
 
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
@@ -1102,4 +1102,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
