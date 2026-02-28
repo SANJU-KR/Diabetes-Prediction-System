@@ -457,7 +457,7 @@ def prediction_page():
         section[data-testid="stSidebar"] h3,
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] p {
-        color: black !important;
+        color: white !important;
         font-weight: 600;
         }
 
@@ -1102,5 +1102,6 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
