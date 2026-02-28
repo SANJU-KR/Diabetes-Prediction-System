@@ -747,4 +747,3 @@ else:
     prediction_page()
 
 
-
