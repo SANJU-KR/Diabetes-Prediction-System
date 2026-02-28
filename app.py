@@ -81,102 +81,139 @@ def registration_page():
 
     st.markdown(f"""
     <style>
-    /* Full Background */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+    /* Full Background & Global Font */
+    html, body, [class*="st-"] {{
+        font-family: 'Poppins', sans-serif !important;
+    }}
     .stApp {{
-        background: linear-gradient(rgba(0,0,0,0.10), rgba(0,0,0,0.10)),
+        background: linear-gradient(rgba(10, 15, 30, 0.4), rgba(10, 15, 30, 0.6)),
                     url("data:image/jpg;base64,{img}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        font-family: 'Segoe UI', sans-serif;
     }}
-   
-   /* Center the form - Glass Effect */
-div[data-testid="stForm"] {{
-    background: rgba(255, 255, 255, 0.10);
-    backdrop-filter: blur(.2px);
-    border-radius: 25px;
-    padding: 40px;
-    width: 100%;
-    max-width: 700px;
-    margin: 5vh auto;
-    border: 1px solid rgba(255,255,255,0.25);
-    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-}}
+    
+    /* Center the form - Ultra Glass Effect with Animation */
+    @keyframes slideUpFade {{
+        0% {{ opacity: 0; transform: translateY(40px); }}
+        100% {{ opacity: 1; transform: translateY(0); }}
+    }}
+    div[data-testid="stForm"] {{
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        border-radius: 30px;
+        padding: 50px;
+        width: 100%;
+        max-width: 750px;
+        margin: 6vh auto;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+        animation: slideUpFade 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }}
 
     /* Title styling */
     h1 {{
-        color: white !important;
+        color: #ffffff !important;
         text-align: center;
-        font-weight: 700;
-        font-size: 40px;
-        margin-bottom: 10px;
+        font-weight: 800;
+        font-size: 46px;
+        letter-spacing: -1px;
+        margin-bottom: 5px;
+        text-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }}
 
     /* Subtitle text */
     .stMarkdown p {{
-        color: #f1f1f1 !important;
+        color: #e2e8f0 !important;
         text-align: center;
-        font-size: 18px;
-        font-weight: 500;
+        font-size: 19px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
     }}
 
-/* ===== TRUE GLASS INPUT STYLE ===== */
-div[data-baseweb="input"] > div,
-div[data-baseweb="textarea"] > div,
-div[data-baseweb="select"] > div {{
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-radius: 18px !important;
-    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
-    box-shadow: inset 0 0 12px rgba(255,255,255,0.15);
-    transition: all 0.3s ease;
-}}
+    /* ===== TRUE GLASS INPUT STYLE ===== */
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="textarea"] > div,
+    div[data-baseweb="select"] > div {{
+        background: rgba(255, 255, 255, 0.06) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }}
 
-/* Focus Glow Effect */
-div[data-baseweb="input"] > div:focus-within,
-div[data-baseweb="textarea"] > div:focus-within,
-div[data-baseweb="select"] > div:focus-within {{
-    border: 1.5px solid rgba(255,255,255,0.8) !important;
-    box-shadow: 0 0 20px rgba(255,255,255,0.6);
-}}
+    /* Focus Glow Effect */
+    div[data-baseweb="input"] > div:focus-within,
+    div[data-baseweb="textarea"] > div:focus-within,
+    div[data-baseweb="select"] > div:focus-within {{
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(0, 212, 255, 0.8) !important;
+        box-shadow: 0 0 25px rgba(0, 212, 255, 0.3), inset 0 2px 4px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }}
 
-input, textarea {{
-    color: black !important;
-    font-weight: 500 !important;
-}}
-
-     /* Make form labels more visible */
-    label {{
+    input, textarea {{
         color: #ffffff !important;
-        font-size: 19px !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.6px;
-        text-shadow: 0px 2px 6px rgba(0,0,0,0.7);
+        font-weight: 500 !important;
+        font-size: 16px !important;
+        padding-left: 10px !important;
+    }}
+
+    /* Make form labels more visible */
+    label {{
+        color: #f8fafc !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px !important;
+        text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
     }}
 
     /* Placeholder text visibility */
     input::placeholder, textarea::placeholder {{
-        color: #555 !important;
+        color: rgba(255,255,255,0.4) !important;
+        font-weight: 400 !important;
+    }}
+
+    /* Dropdown text fix */
+    div[data-baseweb="select"] span {{
+        color: white !important;
         font-weight: 500 !important;
     }}
 
-    /* Button Styling */
+    /* Animated Submit Button Styling */
+    @keyframes gradientBG {{
+        0% {{ background-position: 0% 50%; }}
+        50% {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
     div[data-testid="stForm"] button {{
-        background: linear-gradient(90deg, #1f8ef1, #005bea);
+        background: linear-gradient(270deg, #00d2ff, #3a7bd5, #00d2ff);
+        background-size: 200% 200%;
+        animation: gradientBG 5s ease infinite;
         color: white !important;
-        border-radius: 12px !important;
-        height: 50px !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
+        border-radius: 16px !important;
+        height: 56px !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        letter-spacing: 1px;
         border: none !important;
-        transition: 0.3s ease-in-out;
+        box-shadow: 0 10px 25px rgba(58, 123, 213, 0.4);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        margin-top: 20px !important;
     }}
 
     div[data-testid="stForm"] button:hover {{
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(0,91,234,0.6);
+        transform: scale(1.02) translateY(-3px);
+        box-shadow: 0 15px 35px rgba(58, 123, 213, 0.6);
+    }}
+    div[data-testid="stForm"] button:active {{
+        transform: scale(0.98);
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -185,11 +222,12 @@ input, textarea {{
 <style>
 @media (max-width: 768px) {
     div[data-testid="stForm"] {
-        padding: 20px !important;
-        margin-top: 30px !important;
+        padding: 30px !important;
+        margin-top: 20px !important;
+        border-radius: 20px !important;
     }
     h1 {
-        font-size: 26px !important;
+        font-size: 32px !important;
     }
 }   
 </style>
@@ -249,7 +287,7 @@ input, textarea {{
          ist = pytz.timezone("Asia/Kolkata")
          current_time = datetime.now(ist)
          patient_id = "PAT" + str(uuid.uuid4().int)[:6]
-               
+                
          user_data ={
             "_id": patient_id,
             "name": name,
@@ -293,8 +331,14 @@ def prediction_page():
        img = get_base64_image("health22.png")  # your image name
        st.markdown(f"""
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        html, body, [class*="st-"] {{
+            font-family: 'Poppins', sans-serif !important;
+        }}
+        
         .stApp {{
-            background: linear-gradient(rgba(0,0,0,.23), rgba(0,0,0,.23)), url("data:image/png;base64,{img}");
+            background: linear-gradient(rgba(10, 15, 30, 0.7), rgba(10, 15, 30, 0.85)), url("data:image/png;base64,{img}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -304,86 +348,127 @@ def prediction_page():
   
        st.markdown("""
         <style>
-     h1, h2, h3 { color: white !important; }
-     p, li { color: #f1f1f1 !important; font-size:clamp(16px,2vw,22px); }
+     h1, h2, h3 { color: #ffffff !important; font-weight: 700 !important; letter-spacing: -0.5px; }
+     p, li { color: #e2e8f0 !important; font-size:clamp(16px,2vw,18px); font-weight: 400; }
      ul { line-height: 1.8; }
+     
+     /* Subtle fade in for main content */
+     .block-container {
+         animation: fadeIn 1s ease-in-out;
+     }
+     @keyframes fadeIn {
+         from { opacity: 0; transform: translateY(20px); }
+         to { opacity: 1; transform: translateY(0); }
+     }
      </style>
     """, unsafe_allow_html=True)
        
     # -----------------------------
-    # ORIGINAL GLASS SIDEBAR STYLING
+    # ADVANCED GLASS SIDEBAR STYLING
     # -----------------------------
        st.markdown("""
         <style>
         section[data-testid="stSidebar"] {
-            background: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(15px);
-           -webkit-backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(30px) saturate(200%);
+           -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 10px 0 40px rgba(0,0,0,0.5);
             padding: 25px;
         }
         
-        /* Make Sidebar Text White */
+        /* Make Sidebar Text Beautiful */
         section[data-testid="stSidebar"] h1, 
         section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3, 
-        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] h3 {
+            color: #00d2ff !important; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        section[data-testid="stSidebar"] label {
+            color: #cbd5e1 !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            margin-bottom: 5px !important;
+        }
+        
         section[data-testid="stSidebar"] p,
         section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] { 
-            color: white !important; 
-            font-weight: 600; 
+            color: #f8fafc !important; 
+            font-weight: 500; 
         }
 
-        /* Sidebar Buttons */
+        /* Hoverable Sidebar Buttons */
         section[data-testid="stSidebar"] button {
-            background: rgba(255,255,255,0.15) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
             backdrop-filter: blur(15px);
-            border-radius: 12px !important;
-            border: 1px solid rgba(255,255,255,0.4) !important;
+            border-radius: 14px !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
             color: white !important;
             font-weight: 600 !important;
-            transition: 0.3s ease;
+            height: 48px !important;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         section[data-testid="stSidebar"] button:hover { 
-            background: rgba(255,255,255,0.25) !important; 
-            transform: scale(1.03); 
+            background: linear-gradient(90deg, #1f8ef1, #005bea) !important;
+            border: none !important;
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 20px rgba(0, 91, 234, 0.4);
         }
        </style>
        """, unsafe_allow_html=True)
 
        st.markdown("""
 <style>
-/* Dropdown popup background (Dark) */
-div[data-baseweb="popover"] { background: midnightblue !important; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px); }
-ul[role="listbox"] { background: midnightblue !important; }
-li[role="option"] { background: transparent !important; color: white !important; font-weight: 600 !important; }
-li[role="option"]:hover { background: #00d4ff !important; color: black !important; }
+/* Dropdown popup background (Dark Premium) */
+div[data-baseweb="popover"] { 
+    background: rgba(15, 23, 42, 0.95) !important; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    backdrop-filter: blur(25px); 
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+ul[role="listbox"] { background: transparent !important; }
+li[role="option"] { background: transparent !important; color: #cbd5e1 !important; font-weight: 500 !important; transition: 0.2s; }
+li[role="option"]:hover { background: rgba(0, 210, 255, 0.15) !important; color: #00d2ff !important; padding-left: 20px; }
 
 /* Selected dropdown value text */
-section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: black !important; font-weight: 600 !important; }
+section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: #f8fafc !important; font-weight: 600 !important; }
 
-
-/* 🔥 NEW FIX: Make ALL input boxes and dropdowns white/light gray 🔥 */
+/* 🔥 ULTRA SLEEK INPUT BOXES 🔥 */
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-    background-color: #f1f5f9 !important;   /* light gray */
-    color: black !important;
-    border-radius: 14px !important;
-    border: 1.5px solid rgba(255,255,255,0.35) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important; 
+    color: white !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    transition: all 0.3s ease;
 }
 
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-    border: 1.5px solid rgba(255,255,255,0.8) !important;
-    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+    border: 1px solid #00d2ff !important;
+    background-color: rgba(0, 210, 255, 0.05) !important;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
 }
 
 /* Text color inside the inputs */
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {
-    color: black !important;
-    -webkit-text-fill-color: black !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
     font-weight: 600 !important;
+}
+
+/* Fix Slider styling */
+.stSlider [data-baseweb="slider"] div[data-testid="stTickBar"] { display: none; }
+.stSlider div[data-baseweb="slider"] div[role="slider"] {
+    background-color: #00d2ff !important;
+    box-shadow: 0 0 10px #00d2ff;
 }
 
 /* 🔥 Hide +/- Buttons 🔥 */
@@ -397,22 +482,69 @@ input[type="number"] { -moz-appearance: textfield; }
        
        st.markdown("""
 <style>
-/* FIX DOWNLOAD BUTTON VISIBILITY */
+/* GLOWING DOWNLOAD BUTTON */
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(0, 212, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+}
 div.stDownloadButton > button {
-    background-color: #0f172a !important; color: white !important;
-    font-weight: 700 !important; border-radius: 12px !important;
-    padding: 10px 20px !important; border: 1px solid #00d4ff !important;
+    background: linear-gradient(135deg, #0f172a, #1e293b) !important; 
+    color: #00d4ff !important;
+    font-weight: 700 !important; 
+    font-size: 16px !important;
+    border-radius: 16px !important;
+    padding: 12px 24px !important; 
+    border: 1px solid rgba(0, 212, 255, 0.5) !important;
+    transition: all 0.4s ease;
+    animation: pulseGlow 3s infinite;
 }
 div.stDownloadButton > button:hover {
-    background-color: #00d4ff !important; color: black !important; transform: scale(1.03);
+    background: linear-gradient(135deg, #00d4ff, #005bea) !important; 
+    color: white !important; 
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 212, 255, 0.4);
+    border: 1px solid transparent !important;
 }
 
-.glass-box {
-     background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px); border-radius: 20px;
-    padding: 40px; border: 1px solid rgba(255,255,255,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 40px;
+/* FLOATING GLASS BOX WITH NEON ACCENT */
+@keyframes floatBox {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
 }
+.glass-box {
+     background: rgba(255, 255, 255, 0.03); 
+     backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px); 
+    border-radius: 24px;
+    padding: 45px; 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255,255,255,0.3);
+    border-left: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,255,255,0.02); 
+    margin-bottom: 40px;
+    animation: floatBox 6s ease-in-out infinite;
+    transition: all 0.5s ease;
+}
+.glass-box:hover {
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+    border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* Streamlit Metric Styling Override */
+[data-testid="stMetricValue"] {
+    font-size: 2.8rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+[data-testid="stMetricLabel"] {
+    font-size: 1.1rem !important;
+    color: #cbd5e1 !important;
+    font-weight: 500 !important;
+}
+
 @media (max-width: 992px) { section[data-testid="stSidebar"] { width: 100% !important; } }
 </style>
 """, unsafe_allow_html=True)
@@ -493,7 +625,7 @@ div.stDownloadButton > button:hover {
 
          # Save to MongoDB
          ist = pytz.timezone('Asia/Kolkata')
-         current_time = datetime.now(ist)    
+         current_time = datetime.now(ist)   
          prediction_data = {
             "patient_id": info["_id"], "patient_name": info["name"], "age": age,
             "gender": gender, "glucose": glucose, "blood_pressure": bp, "bmi": bmi,
@@ -531,7 +663,7 @@ div.stDownloadButton > button:hover {
 
          if glucose >= 126: risk_factors.append("High Glucose Level (≥126 mg/dL)")
          elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
-         else: positive_factors.append("Normal Glucose Level (<100 mg/dL)")    
+         else: positive_factors.append("Normal Glucose Level (<100 mg/dL)")   
 
          if bmi > 30: risk_factors.append("High BMI (Obesity)")
          elif 18.5 <= bmi <= 24.9: positive_factors.append("Healthy BMI")
@@ -727,11 +859,11 @@ div.stDownloadButton > button:hover {
          buffer.close()
 
          st.download_button(
-            label="📄 Download Professional Medical Report (PDF)",
-            data=pdf,
-            file_name=f"Diabetes_Report_{info.get('name', 'Patient')}.pdf",
-            mime="application/pdf"
-        )
+             label="📄 Download Professional Medical Report (PDF)",
+             data=pdf,
+             file_name=f"Diabetes_Report_{info.get('name', 'Patient')}.pdf",
+             mime="application/pdf"
+         )
 
          # Disclaimer UI
          st.markdown("---")
