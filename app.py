@@ -310,67 +310,70 @@ def prediction_page():
     """, unsafe_allow_html=True)
        
     # -----------------------------
-    # Glass Sidebar Styling
+    # SOLID WHITE Sidebar Styling (Updated)
     # -----------------------------
        st.markdown("""
         <style>
         section[data-testid="stSidebar"] {
-            background: rgba(300,300,300,0.10) !important;
-            backdrop-filter: blur(7px);
-           -webkit-backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(300,300,300,0.1o);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+            background-color: #ffffff !important; /* Solid White Background */
+            border-right: 1px solid #e2e8f0;
             padding: 25px;
         }
-        section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3, section[data-testid="stSidebar"] label,
-        section[data-testid="stSidebar"] p { color: white !important; font-weight: 600; }
+        
+        /* Make Sidebar Text Dark/Black for readability on white background */
+        section[data-testid="stSidebar"] h1, 
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3, 
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] p,
+        section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] { 
+            color: #0f172a !important; 
+            font-weight: 600; 
+        }
 
+        /* Sidebar Input Boxes */
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
         section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-            background: rgba(255,255,255,0.10) !important;
-            backdrop-filter: blur(15px);
-            border-radius: 14px !important;
-            border: 1.5px solid rgba(255,255,255,0.35) !important;
-            color: white !important;
+            background: #f8fafc !important; /* Very light gray */
+            border-radius: 8px !important;
+            border: 1px solid #cbd5e1 !important;
+            color: black !important;
         }
 
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
         section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-            border: 1.5px solid rgba(255,255,255,0.8) !important;
-            box-shadow: 0 0 15px rgba(255,255,255,0.6);
+            border: 1.5px solid #005bea !important;
+            box-shadow: 0 0 5px rgba(0, 91, 234, 0.3);
         }
 
+        /* Sidebar Buttons */
         section[data-testid="stSidebar"] button {
-            background: rgba(255,255,255,0.15) !important;
-            backdrop-filter: blur(15px);
-            border-radius: 12px !important;
-            border: 1px solid rgba(255,255,255,0.4) !important;
+            background: #0f172a !important;
+            border-radius: 8px !important;
+            border: none !important;
             color: white !important;
             font-weight: 600 !important;
             transition: 0.3s ease;
         }
-        section[data-testid="stSidebar"] button:hover { background: rgba(255,255,255,0.25) !important; transform: scale(1.03); }
+        section[data-testid="stSidebar"] button:hover { 
+            background: #005bea !important; 
+            transform: scale(1.02); 
+        }
        </style>
        """, unsafe_allow_html=True)
 
        st.markdown("""
 <style>
-/* Dropdown popup background */
-div[data-baseweb="popover"] { background: midnightblue  !important; backdrop-filter: blur(20px); }
-ul[role="listbox"] { background: midnightblue !important; }
-li[role="option"] { background: #1e2a4a !important; color: white !important; font-weight: 600 !important; }
-li[role="option"]:hover { background: #00d4ff !important; color: black !important; }
-</style>
-""", unsafe_allow_html=True)
-       
-       st.markdown("""
-<style>
+/* Dropdown popup background (Now Light for White Sidebar) */
+div[data-baseweb="popover"] { background: #ffffff !important; border: 1px solid #cbd5e1; }
+ul[role="listbox"] { background: #ffffff !important; }
+li[role="option"] { background: #ffffff !important; color: black !important; font-weight: 600 !important; }
+li[role="option"]:hover { background: #f1f5f9 !important; color: #005bea !important; }
+
 /* Selected dropdown value text */
 section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: black !important; font-weight: 600 !important; }
-section[data-testid="stSidebar"] div[data-baseweb="select"] > div { background-color: #f1f5f9 !important; color: black !important; }
 
-/* For (Number of Pregnancies) & text inputs 👇 */
+/* Text Inputs (Number of Pregnancies, BMI, etc.) */
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {
     color: black !important;
     -webkit-text-fill-color: black !important;
@@ -397,11 +400,7 @@ div.stDownloadButton > button {
 div.stDownloadButton > button:hover {
     background-color: #00d4ff !important; color: black !important; transform: scale(1.03);
 }
-</style>
-""", unsafe_allow_html=True)
-       
-       st.markdown("""
-<style>
+
 .glass-box {
      background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px); border-radius: 20px;
@@ -606,37 +605,39 @@ div.stDownloadButton > button:hover {
          elements = []
          styles = getSampleStyleSheet()
 
-         title_style = ParagraphStyle("CustomTitle", parent=styles["Heading1"], fontSize=18, textColor=colors.HexColor("#0f172a"), alignment=1, spaceAfter=15, fontName="Helvetica-Bold")
-         heading_style = ParagraphStyle("CustomHeading", parent=styles["Heading2"], fontSize=14, textColor=colors.HexColor("#005bea"), spaceBefore=15, spaceAfter=10, fontName="Helvetica-Bold", borderPadding=5, backColor=colors.HexColor("#f8fafc"))
+         title_style = ParagraphStyle("CustomTitle", parent=styles["Heading1"], fontSize=20, textColor=colors.HexColor("#0f172a"), alignment=1, spaceAfter=20, fontName="Helvetica-Bold")
+         heading_style = ParagraphStyle("CustomHeading", parent=styles["Heading2"], fontSize=14, textColor=colors.HexColor("#005bea"), spaceBefore=15, spaceAfter=10, fontName="Helvetica-Bold", borderPadding=6, backColor=colors.HexColor("#f8fafc"))
          normal_style = styles["Normal"]
          normal_style.fontSize = 11
          normal_style.spaceAfter = 6
+         
+         # Address Wrapping Style
+         address_style = ParagraphStyle("AddressStyle", parent=styles["Normal"], fontSize=11, leading=14)
 
-         # Title & Risk
+         # Title
          elements.append(Paragraph("🩺 COMPREHENSIVE DIABETES RISK ASSESSMENT", title_style))
-         elements.append(Spacer(1, 0.1 * inch))
 
-         if prob_positive < 30: risk_level_str = "<font color='green'><b>LOW RISK - Diabetes Unlikely</b></font>"
-         elif prob_positive < 70: risk_level_str = "<font color='#d97706'><b>MODERATE RISK - Possible Diabetes</b></font>"
-         else: risk_level_str = "<font color='red'><b>HIGH RISK - Diabetes Likely</b></font>"
-
-         elements.append(Paragraph(f"<b>Overall Risk Level:</b> {risk_level_str}", normal_style))
-         elements.append(Paragraph(f"<b>Risk Percentage:</b> {prob_positive:.1f}%", normal_style))
-         elements.append(Spacer(1, 0.2 * inch))
-
-         # Patient Profile Table
+         # 1. Patient Profile Table (Address will wrap automatically now)
+         address_paragraph = Paragraph(info.get("address", "N/A"), address_style)
+         
          patient_table = [
             ["Patient ID", info.get("_id", "N/A")], ["Full Name", info.get("name", "N/A")],
             ["Email Address", info.get("email", "N/A")], ["Phone Number", info.get("phone", "N/A")],
-            ["Country", info.get("country", "N/A")], ["Address", info.get("address", "N/A")]
+            ["Country", info.get("country", "N/A")], ["Address", address_paragraph]
          ]
          table = Table(patient_table, colWidths=[2.2*inch, 4.3*inch])
-         table.setStyle(TableStyle([("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), ("PADDING", (0,0), (-1,-1), 6)]))
+         table.setStyle(TableStyle([
+             ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), 
+             ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), 
+             ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), 
+             ("PADDING", (0,0), (-1,-1), 8),
+             ("VALIGN", (0,0), (-1,-1), "MIDDLE")
+         ]))
          elements.append(Paragraph("Patient Profile", heading_style))
          elements.append(table)
          elements.append(Spacer(1, 0.2 * inch))
 
-         # Clinical Inputs Table
+         # 2. Clinical Inputs Table
          medical_inputs = [
              ["Age", f"{age} Years"], ["Gender", gender], ["Glucose Level", f"{glucose} mg/dL"],
              ["Blood Pressure", f"{bp} mmHg"], ["Skin Thickness", f"{skin} mm"], ["Insulin Level", f"{insulin} IU/mL"],
@@ -646,12 +647,28 @@ div.stDownloadButton > button:hover {
              medical_inputs.insert(2, ["Number of Pregnancies", str(pregnancies)])
 
          med_table = Table(medical_inputs, colWidths=[2.2*inch, 4.3*inch])
-         med_table.setStyle(TableStyle([("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), ("PADDING", (0,0), (-1,-1), 6)]))
+         med_table.setStyle(TableStyle([
+             ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), 
+             ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), 
+             ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), 
+             ("PADDING", (0,0), (-1,-1), 8),
+             ("VALIGN", (0,0), (-1,-1), "MIDDLE")
+         ]))
          elements.append(Paragraph("Clinical Inputs", heading_style))
          elements.append(med_table)
+         elements.append(Spacer(1, 0.3 * inch))
+
+         # 3. Overall Risk Level & Risk Percentage (Moved here as requested)
+         elements.append(Paragraph("Risk Assessment Result", heading_style))
+         if prob_positive < 30: risk_level_str = "<font color='green'><b>LOW RISK - Diabetes Unlikely</b></font>"
+         elif prob_positive < 70: risk_level_str = "<font color='#d97706'><b>MODERATE RISK - Possible Diabetes</b></font>"
+         else: risk_level_str = "<font color='red'><b>HIGH RISK - Diabetes Likely</b></font>"
+
+         elements.append(Paragraph(f"<b>Overall Risk Level:</b> {risk_level_str}", normal_style))
+         elements.append(Paragraph(f"<b>Risk Percentage:</b> {prob_positive:.1f}%", normal_style))
          elements.append(Spacer(1, 0.2 * inch))
 
-         # Polaroid-style Charts Generation for PDF
+         # 4. Polaroid-style Charts Generation for PDF
          try:
              pdf_bar = go.Figure(bar_fig)
              pdf_bar.update_layout(font=dict(color="black"), paper_bgcolor="white", plot_bgcolor="white", title="Risk Severity")
@@ -671,8 +688,9 @@ div.stDownloadButton > button:hover {
              chart_table = Table([[bar_rl, pie_rl]], colWidths=[3.3*inch, 3.3*inch])
              chart_table.setStyle(TableStyle([
                  ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                 ('BOX', (0,0), (-1,-1), 0.5, colors.lightgrey), # Polaroid border look
-                 ('BOTTOMPADDING', (0,0), (-1,-1), 10)
+                 ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#e2e8f0")), # Clean thick border
+                 ('BOTTOMPADDING', (0,0), (-1,-1), 15),
+                 ('TOPPADDING', (0,0), (-1,-1), 10)
              ]))
              elements.append(chart_table)
          except Exception as e:
@@ -680,7 +698,7 @@ div.stDownloadButton > button:hover {
          
          elements.append(Spacer(1, 0.2 * inch))
 
-         # Recommendations in PDF
+         # 5. Recommendations in PDF
          elements.append(Paragraph("Medical Recommendations", heading_style))
          rec_list = [ListItem(Paragraph(r, normal_style)) for r in recs_for_pdf]
          elements.append(ListFlowable(rec_list, bulletType='bullet'))
