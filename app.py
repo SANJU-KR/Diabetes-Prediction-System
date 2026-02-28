@@ -722,71 +722,6 @@ div.stDownloadButton > button:hover {
 
          elements.append(Paragraph("<b>Medical Disclaimer:</b> This report is AI-generated and does not replace professional medical advice.", styles["Italic"]))
 
-           # 4. Charts Generation for PDF
-try:
-    time.sleep(1)  # Kaleido stability delay
-
-    # Create clean white background version for PDF
-    pdf_bar = go.Figure(bar_fig.to_dict())
-    pdf_bar.update_layout(
-        font=dict(color="black"),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        title="Risk Severity"
-    )
-    pdf_bar.update_xaxes(
-        tickfont=dict(color="black"),
-        title_font=dict(color="black"),
-        linecolor="black"
-    )
-    pdf_bar.update_yaxes(
-        tickfont=dict(color="black"),
-        title_font=dict(color="black"),
-        gridcolor="lightgrey",
-        zerolinecolor="black"
-    )
-
-    pdf_pie = go.Figure(pie_fig.to_dict())
-    pdf_pie.update_layout(
-        font=dict(color="black"),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        title="Risk Contribution"
-    )
-
-    # Export charts as image using Kaleido
-    bar_img_bytes = pdf_bar.to_image(
-        format="png",
-        engine="kaleido",
-        width=700,
-        height=450,
-        scale=2
-    )
-
-    pie_img_bytes = pdf_pie.to_image(
-        format="png",
-        engine="kaleido",
-        width=700,
-        height=450,
-        scale=2
-    )
-
-    # Convert to ReportLab images
-    bar_rl = RLImage(BytesIO(bar_img_bytes), width=5.5*inch, height=3.5*inch)
-    pie_rl = RLImage(BytesIO(pie_img_bytes), width=5.5*inch, height=3.5*inch)
-
-    elements.append(Paragraph("Data Visualization & Analysis", heading_style))
-    elements.append(Spacer(1, 0.2 * inch))
-    elements.append(bar_rl)
-    elements.append(Spacer(1, 0.3 * inch))
-    elements.append(pie_rl)
-
-except Exception as e:
-    elements.append(Paragraph(
-        "<font color='red'><i>Charts could not be generated. Ensure Kaleido is installed.</i></font>",
-        normal_style
-    ))
-    
          # Build PDF
          doc.build(elements)
          pdf = buffer.getvalue()
@@ -810,6 +745,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
-
 
 
