@@ -44,7 +44,7 @@ import uuid
 import pytz
 
 #  my string
-uri = "mongodb+srv://project00067:Project123@cluster0.vzzvdti.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://diabetes_user:Diabetes%40123@diabetescluster.oxegep6.mongodb.net/?retryWrites=true&w=majority"
 
 # Create MongoDB Client
 client = MongoClient(uri, server_api=ServerApi('1'))
@@ -1102,3 +1102,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
