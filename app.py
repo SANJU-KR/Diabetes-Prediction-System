@@ -535,7 +535,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] span {
 
 /* Dropdown input box background */
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-    background-color: #f1f5f9 !important;   /* light gray */
+    background-color: black !important;   /* light gray */
     color: black !important;
 }
 
@@ -1102,3 +1102,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
