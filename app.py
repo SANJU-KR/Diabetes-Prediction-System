@@ -83,43 +83,41 @@ def registration_page():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Enterprise SaaS Reset */
+    /* Clinical Healthcare Reset */
     html, body, [class*="st-"] {{
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        -webkit-font-smoothing: antialiased;
+        font-family: 'Inter', sans-serif !important;
     }}
     
     .stApp {{
-        background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.95)),
+        /* Deep Medical Navy Overlay to give a pristine, sterile but welcoming hospital vibe */
+        background: linear-gradient(rgba(10, 25, 47, 0.92), rgba(6, 15, 28, 0.96)),
                     url("data:image/jpg;base64,{img}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }}
     
-    /* Center the form - Professional Solid Card */
+    /* Center the form - Medical Chart Style */
     div[data-testid="stForm"] {{
-        background-color: #1e293b;
+        background-color: #0f172a; /* Deep clinical blue */
         border-radius: 12px;
         padding: 48px;
         width: 100%;
         max-width: 650px;
         margin: 6vh auto;
-        border: 1px solid #334155;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+        border: 1px solid #1e293b;
+        border-top: 4px solid #0ea5e9; /* Medical Blue Top Accent */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }}
 
-    /* Title styling - Crisp & Authoritative */
     h1 {{
         color: #f8fafc !important;
         text-align: center;
         font-weight: 700;
-        font-size: 36px;
-        letter-spacing: -0.025em;
+        font-size: 34px;
         margin-bottom: 8px;
     }}
 
-    /* Subtitle text */
     .stMarkdown p {{
         color: #94a3b8 !important;
         text-align: center;
@@ -128,74 +126,61 @@ def registration_page():
         margin-bottom: 24px;
     }}
 
-    /* ===== ENTERPRISE INPUT STYLE ===== */
+    /* Inputs - Clean, precise like medical equipment */
     div[data-baseweb="input"] > div,
     div[data-baseweb="textarea"] > div,
     div[data-baseweb="select"] > div {{
-        background-color: #0f172a !important;
-        border-radius: 8px !important;
+        background-color: #1e293b !important;
+        border-radius: 6px !important;
         border: 1px solid #334155 !important;
-        transition: all 0.15s ease-in-out;
+        transition: all 0.2s ease;
     }}
 
-    /* Focus Ring - MacOS / SaaS Style */
     div[data-baseweb="input"] > div:focus-within,
     div[data-baseweb="textarea"] > div:focus-within,
     div[data-baseweb="select"] > div:focus-within {{
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
-        background-color: #1e293b !important;
+        border-color: #0ea5e9 !important; /* Medical Cyan */
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
     }}
 
     input, textarea {{
         color: #f8fafc !important;
         font-weight: 500 !important;
-        font-size: 15px !important;
-        padding: 12px 14px !important;
+        padding: 12px !important;
     }}
 
-    /* Form labels - Subtle & Clean */
     label {{
         color: #cbd5e1 !important;
         font-size: 14px !important;
         font-weight: 600 !important;
-        margin-bottom: 6px !important;
     }}
 
     input::placeholder, textarea::placeholder {{
-        color: #64748b !important;
-        font-weight: 400 !important;
+        color: #475569 !important;
     }}
 
     div[data-baseweb="select"] span {{
         color: #f8fafc !important;
-        font-weight: 500 !important;
     }}
 
-    /* Primary Action Button - Solid & Trustworthy */
+    /* Register Button - Trustworthy Teal/Blue */
     div[data-testid="stForm"] button {{
-        background-color: #2563eb !important;
+        background-color: #0ea5e9 !important;
         color: #ffffff !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         height: 48px !important;
         font-size: 16px !important;
         font-weight: 600 !important;
-        letter-spacing: 0.025em;
         border: none !important;
-        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
-        transition: all 0.15s ease-in-out;
+        transition: all 0.2s ease;
         margin-top: 16px !important;
         width: 100% !important;
     }}
 
     div[data-testid="stForm"] button:hover {{
-        background-color: #1d4ed8 !important;
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+        background-color: #0284c7 !important;
         transform: translateY(-1px);
-    }}
-    div[data-testid="stForm"] button:active {{
-        transform: translateY(0);
-        background-color: #1e40af !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -206,9 +191,6 @@ def registration_page():
     div[data-testid="stForm"] {
         padding: 24px !important;
         margin-top: 16px !important;
-    }
-    h1 {
-        font-size: 28px !important;
     }
 }   
 </style>
@@ -315,11 +297,12 @@ def prediction_page():
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         html, body, [class*="st-"] {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-family: 'Inter', sans-serif !important;
         }}
         
         .stApp {{
-            background: linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.98)), url("data:image/png;base64,{img}");
+            /* Clinical Deep Navy Gradient */
+            background: linear-gradient(rgba(10, 25, 47, 0.95), rgba(6, 15, 28, 0.98)), url("data:image/png;base64,{img}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -329,28 +312,24 @@ def prediction_page():
   
        st.markdown("""
         <style>
-     h1, h2, h3 { color: #f8fafc !important; font-weight: 700 !important; letter-spacing: -0.025em; }
-     p, li { color: #cbd5e1 !important; font-size: 16px; font-weight: 400; }
+     h1, h2, h3 { color: #f8fafc !important; font-weight: 700 !important; }
+     p, li { color: #cbd5e1 !important; font-size: 16px; }
      
-     /* Clinical Card UI for Metric Blocks */
+     /* Clinical Dashboard Cards */
      div[data-testid="metric-container"] {
-         background-color: #1e293b;
-         border: 1px solid #334155;
+         background-color: #0f172a;
+         border: 1px solid #1e293b;
+         border-left: 4px solid #0ea5e9; /* Signature Medical Blue */
          border-radius: 8px;
          padding: 16px;
-         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
      }
      [data-testid="stMetricValue"] {
          font-size: 2.2rem !important;
-         font-weight: 700 !important;
          color: #ffffff !important;
      }
      [data-testid="stMetricLabel"] {
-         font-size: 0.9rem !important;
          color: #94a3b8 !important;
-         font-weight: 600 !important;
          text-transform: uppercase;
-         letter-spacing: 0.05em;
      }
      </style>
     """, unsafe_allow_html=True)
@@ -361,7 +340,7 @@ def prediction_page():
        st.markdown("""
         <style>
         section[data-testid="stSidebar"] {
-            background-color: #0b0f19 !important; /* Deeper background for sidebar */
+            background-color: #060f1c !important; 
             border-right: 1px solid #1e293b !important;
             padding: 24px 16px;
         }
@@ -369,37 +348,27 @@ def prediction_page():
         section[data-testid="stSidebar"] h1, 
         section[data-testid="stSidebar"] h2,
         section[data-testid="stSidebar"] h3 {
-            color: #f8fafc !important; 
+            color: #0ea5e9 !important; /* Medical Cyan Headings */
             font-size: 1.1rem;
             margin-bottom: 16px;
             border-bottom: 1px solid #1e293b;
             padding-bottom: 8px;
         }
         
-        section[data-testid="stSidebar"] label {
-            color: #94a3b8 !important;
-            font-size: 13px !important;
-            font-weight: 600 !important;
-        }
-        
-        section[data-testid="stSidebar"] p { 
-            color: #cbd5e1 !important; 
-            font-size: 14px;
-        }
+        section[data-testid="stSidebar"] label { color: #94a3b8 !important; font-size: 13px !important; }
+        section[data-testid="stSidebar"] p { color: #cbd5e1 !important; font-size: 14px; }
 
-        /* Standardized Outline Buttons for Sidebar */
         section[data-testid="stSidebar"] button {
-            background-color: transparent !important;
+            background-color: #1e293b !important;
             border-radius: 6px !important;
             border: 1px solid #334155 !important;
             color: #f8fafc !important;
             font-weight: 500 !important;
             height: 40px !important;
-            transition: all 0.15s ease-in-out;
         }
         section[data-testid="stSidebar"] button:hover { 
-            background-color: #1e293b !important;
-            border-color: #475569 !important;
+            background-color: #0ea5e9 !important;
+            border-color: #0ea5e9 !important;
         }
        </style>
        """, unsafe_allow_html=True)
@@ -407,17 +376,11 @@ def prediction_page():
        st.markdown("""
 <style>
 /* Clean Dropdown */
-div[data-baseweb="popover"] { 
-    background-color: #1e293b !important; 
-    border: 1px solid #334155; 
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-ul[role="listbox"] { background: transparent !important; }
-li[role="option"] { background: transparent !important; color: #cbd5e1 !important; font-size: 14px; }
-li[role="option"]:hover { background-color: #0f172a !important; color: #f8fafc !important; }
+div[data-baseweb="popover"] { background-color: #0f172a !important; border: 1px solid #1e293b; }
+li[role="option"] { color: #cbd5e1 !important; }
+li[role="option"]:hover { background-color: #1e293b !important; color: #f8fafc !important; }
 
-/* Sidebar Inputs - Flat & Professional */
+/* Sidebar Inputs */
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background-color: #0f172a !important; 
@@ -426,21 +389,15 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 }
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    border-color: #0ea5e9 !important;
 }
+section[data-testid="stSidebar"] div[data-baseweb="input"] input { color: #f8fafc !important; }
 
-section[data-testid="stSidebar"] div[data-baseweb="input"] input {
-    color: #f8fafc !important;
-    -webkit-text-fill-color: #f8fafc !important;
-    font-size: 14px !important;
-}
-
-/* Precise Slider */
+/* Clinical Slider - Medical Blue */
 .stSlider [data-baseweb="slider"] div[data-testid="stTickBar"] { display: none; }
 .stSlider div[data-baseweb="slider"] div[role="slider"] {
-    background-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px #0f172a; /* Creates a clean cutout effect */
+    background-color: #0ea5e9 !important;
+    box-shadow: 0 0 0 2px #060f1c; 
 }
 
 /* Hide Spinners */
@@ -456,39 +413,33 @@ input[type="number"] { -moz-appearance: textfield; }
 <style>
 /* Enterprise Download Button */
 div.stDownloadButton > button {
-    background-color: #ffffff !important; 
+    background-color: #f8fafc !important; 
     color: #0f172a !important;
     font-weight: 600 !important; 
-    font-size: 15px !important;
-    border-radius: 8px !important;
-    padding: 10px 20px !important; 
+    border-radius: 6px !important;
     border: 1px solid #e2e8f0 !important;
-    transition: all 0.15s ease-in-out;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 div.stDownloadButton > button:hover {
-    background-color: #f8fafc !important; 
-    border-color: #cbd5e1 !important;
+    background-color: #0ea5e9 !important; 
+    color: #ffffff !important;
+    border-color: #0ea5e9 !important;
 }
 
-/* SOLID DASHBOARD CARD */
+/* SOLID MEDICAL DASHBOARD CARD */
 .glass-box {
-    background-color: #1e293b; 
+    background-color: #0f172a; 
     border-radius: 12px;
     padding: 32px; 
-    border: 1px solid #334155;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1); 
+    border: 1px solid #1e293b;
+    border-top: 4px solid #3b82f6; /* Accent color for charts box */
     margin-bottom: 32px;
 }
 
-/* Alerts / Banners restyling for flat look */
-.stAlert {
-    border-radius: 8px !important;
-    border: none !important;
-}
-.stSuccess { background-color: rgba(34, 197, 94, 0.1) !important; color: #4ade80 !important; border-left: 4px solid #22c55e !important; }
-.stWarning { background-color: rgba(234, 179, 8, 0.1) !important; color: #fde047 !important; border-left: 4px solid #eab308 !important; }
-.stError { background-color: rgba(239, 68, 68, 0.1) !important; color: #f87171 !important; border-left: 4px solid #ef4444 !important; }
+/* Standardized Medical Alerts */
+.stAlert { border-radius: 6px !important; border: none !important; }
+.stSuccess { background-color: rgba(16, 185, 129, 0.15) !important; color: #34d399 !important; border-left: 4px solid #10b981 !important; }
+.stWarning { background-color: rgba(245, 158, 11, 0.15) !important; color: #fbbf24 !important; border-left: 4px solid #f59e0b !important; }
+.stError { background-color: rgba(225, 29, 72, 0.15) !important; color: #fb7185 !important; border-left: 4px solid #e11d48 !important; }
 
 @media (max-width: 992px) { section[data-testid="stSidebar"] { width: 100% !important; } }
 </style>
@@ -595,10 +546,20 @@ div.stDownloadButton > button:hover {
             c2.metric("Diabetic", f"{prob_positive:.1f}%")
 
          with col2:
+            # ✅ UPDATED GAUGE COLORS: Teal (Safe), Amber (Warning), Rose/Red (Danger)
             fig = go.Figure(go.Indicator(
-                mode="gauge+number", value=prob_positive, number={"suffix": "%"}, title={"text": "Risk Level"},
-                gauge={"axis": {"range": [0, 100]}, "steps": [{"range": [0, 30], "color": "green"}, {"range": [30, 70], "color": "yellow"}, {"range": [70, 100], "color": "red"}]}
+                mode="gauge+number", value=prob_positive, number={"suffix": "%", "font": {"color": "white"}}, title={"text": "Risk Level", "font": {"color": "white"}},
+                gauge={
+                    "axis": {"range": [0, 100], "tickcolor": "white"},
+                    "bar": {"color": "rgba(255,255,255,0.4)"},
+                    "steps": [
+                        {"range": [0, 30], "color": "#10b981"},  # Medical Teal
+                        {"range": [30, 70], "color": "#f59e0b"},  # Warning Amber
+                        {"range": [70, 100], "color": "#e11d48"}  # Critical Rose
+                    ]
+                }
             ))
+            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
             st.plotly_chart(fig, use_container_width=True)
 
          # Risk Factor UI Analysis
@@ -658,24 +619,33 @@ div.stDownloadButton > button:hover {
          if dpf > 0.5: cause_labels.append("Genetic Risk (DPF)"); cause_values.append(min(dpf * 100, 100))
          if not cause_labels: cause_labels = ["Healthy Indicators"]; cause_values = [100]
 
-         # UI Bar Chart
+         # ✅ UPDATED BAR CHART: Medical Gradient (Teal -> Amber -> Red) based on severity
          bar_fig = go.Figure(go.Bar(
             x=cause_labels, y=cause_values, text=[f"{v:.1f}" for v in cause_values], textposition='auto',
-            marker=dict(color=cause_values, colorscale="Reds", line=dict(color="white", width=2)),
-            textfont=dict(color="white", size=16)
+            marker=dict(
+                color=cause_values, 
+                colorscale=[[0, '#10b981'], [0.5, '#f59e0b'], [1, '#e11d48']], # Healthcare severity colors
+                line=dict(color="rgba(255,255,255,0.1)", width=1)
+            ),
+            textfont=dict(color="white", size=15)
          ))
          bar_fig.update_layout(
             title="Risk Factor Severity", xaxis_title="Causes", yaxis_title="Severity Level",
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"),
             autosize=True, margin=dict(l=20, r=20, t=50, b=20)
          )
-         bar_fig.update_xaxes(tickfont=dict(color="white", size=14), title_font=dict(color="white", size=16), showline=True, linecolor="white")
-         bar_fig.update_yaxes(tickfont=dict(color="white", size=14), title_font=dict(color="white", size=16), showgrid=True, gridcolor="rgba(255,255,255,0.25)", zerolinecolor="white")
+         bar_fig.update_xaxes(tickfont=dict(color="#cbd5e1", size=13), title_font=dict(color="#f8fafc", size=14), showline=True, linecolor="#334155")
+         bar_fig.update_yaxes(tickfont=dict(color="#cbd5e1", size=13), title_font=dict(color="#f8fafc", size=14), showgrid=True, gridcolor="#1e293b", zerolinecolor="#334155")
 
          with c_col1: st.plotly_chart(bar_fig, use_container_width=True, config={"responsive": True})
 
-         # UI Pie Chart
-         pie_fig = go.Figure(data=[go.Pie(labels=cause_labels, values=cause_values, hole=0.4)])
+         # ✅ UPDATED PIE CHART: Professional Medical Palette
+         medical_pie_colors = ['#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6']
+         pie_fig = go.Figure(data=[go.Pie(
+             labels=cause_labels, values=cause_values, hole=0.45,
+             marker=dict(colors=medical_pie_colors, line=dict(color='#0f172a', width=2)),
+             textfont=dict(color="white", size=14)
+         )])
          pie_fig.update_layout(title="Percentage Contribution", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), autosize=True, margin=dict(l=20, r=20, t=50, b=20))
          with c_col2: st.plotly_chart(pie_fig, use_container_width=True, config={"responsive": True})
          st.markdown('</div>', unsafe_allow_html=True)
