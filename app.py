@@ -58,7 +58,7 @@ st.set_page_config(
     page_icon="🩺",
     layout="wide"
 )
-st.write("App Loaded Successfully")
+
 
 # -----------------------------
 # Session State
@@ -876,3 +876,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
