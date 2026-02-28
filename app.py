@@ -653,7 +653,7 @@ div.stDownloadButton > button:hover {
          medical_inputs = [
              ["Age", f"{age} Years"], ["Gender", gender], ["Glucose Level", f"{glucose} mg/dL"],
              ["Blood Pressure", f"{bp} mmHg"], ["Skin Thickness", f"{skin} mm"], ["Insulin Level", f"{insulin} IU/mL"],
-             ["BMI", str(bmi)], ["Diabetes Pedigree Function (DPF)", str(dpf)]
+             ["BMI", str(bmi)], ["Diabetes Pedigree Function", str(dpf)]
          ]
          if gender == "Female":
              medical_inputs.insert(2, ["Number of Pregnancies", str(pregnancies)])
@@ -745,3 +745,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
