@@ -623,7 +623,7 @@ div.stDownloadButton > button:hover {
          address_style = ParagraphStyle("AddressStyle", parent=styles["Normal"], fontSize=11, leading=14)
 
          # Title & Generated Date
-         elements.append(Paragraph("🩺 COMPREHENSIVE DIABETES RISK ASSESSMENT", title_style))
+         elements.append(Paragraph("🩺 DIABETES RISK PREDICTION REPORT", title_style))
          
          # Dynamic Date and Time
          report_date = current_time.strftime("%d %B %Y | %I:%M %p (IST)")
@@ -745,4 +745,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
