@@ -9,6 +9,7 @@ import base64
 import re
 import pycountry
 import phonenumbers
+import time # Added for Kaleido stability
 
 def get_base64_image(image_file):
     with open(image_file, "rb") as f:
@@ -531,7 +532,7 @@ div.stDownloadButton > button:hover {
 
          if glucose >= 126: risk_factors.append("High Glucose Level (≥126 mg/dL)")
          elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
-         else: positive_factors.append("Normal Glucose Level(<100 mg/dL)")    
+         else: positive_factors.append("Normal Glucose Level (<100 mg/dL)")    
 
          if bmi > 30: risk_factors.append("High BMI (Obesity)")
          elif 18.5 <= bmi <= 24.9: positive_factors.append("Healthy BMI")
@@ -611,7 +612,8 @@ div.stDownloadButton > button:hover {
          elements = []
          styles = getSampleStyleSheet()
 
-         title_style = ParagraphStyle("CustomTitle", parent=styles["Heading1"], fontSize=20, textColor=colors.HexColor("#0f172a"), alignment=1, spaceAfter=20, fontName="Helvetica-Bold")
+         title_style = ParagraphStyle("CustomTitle", parent=styles["Heading1"], fontSize=20, textColor=colors.HexColor("#0f172a"), alignment=1, spaceAfter=5, fontName="Helvetica-Bold")
+         date_style = ParagraphStyle("DateStyle", parent=styles["Normal"], fontSize=10, textColor=colors.dimgrey, alignment=1, spaceAfter=20, fontName="Helvetica-Oblique")
          heading_style = ParagraphStyle("CustomHeading", parent=styles["Heading2"], fontSize=14, textColor=colors.HexColor("#005bea"), spaceBefore=15, spaceAfter=10, fontName="Helvetica-Bold", borderPadding=6, backColor=colors.HexColor("#f8fafc"))
          normal_style = styles["Normal"]
          normal_style.fontSize = 11
@@ -620,10 +622,14 @@ div.stDownloadButton > button:hover {
          # Address Wrapping Style
          address_style = ParagraphStyle("AddressStyle", parent=styles["Normal"], fontSize=11, leading=14)
 
-         # Title
+         # Title & Generated Date
          elements.append(Paragraph("🩺 COMPREHENSIVE DIABETES RISK ASSESSMENT", title_style))
+         
+         # Dynamic Date and Time
+         report_date = current_time.strftime("%d %B %Y | %I:%M %p (IST)")
+         elements.append(Paragraph(f"Report Generated On: {report_date}", date_style))
 
-         # 1. Patient Profile Table (Address will wrap automatically now)
+         # 1. Patient Profile Table
          address_paragraph = Paragraph(info.get("address", "N/A"), address_style)
          
          patient_table = [
@@ -664,7 +670,7 @@ div.stDownloadButton > button:hover {
          elements.append(med_table)
          elements.append(Spacer(1, 0.3 * inch))
 
-         # 3. Overall Risk Level & Risk Percentage (Moved here as requested)
+         # 3. Overall Risk Level & Risk Percentage
          elements.append(Paragraph("Risk Assessment Result", heading_style))
          if prob_positive < 30: risk_level_str = "<font color='green'><b>LOW RISK - Diabetes Unlikely</b></font>"
          elif prob_positive < 70: risk_level_str = "<font color='#d97706'><b>MODERATE RISK - Possible Diabetes</b></font>"
@@ -676,6 +682,9 @@ div.stDownloadButton > button:hover {
 
          # 4. Polaroid-style Charts Generation for PDF
          try:
+             # Force a small delay to allow kaleido to initialize smoothly
+             time.sleep(1) 
+             
              pdf_bar = go.Figure(bar_fig)
              pdf_bar.update_layout(font=dict(color="black"), paper_bgcolor="white", plot_bgcolor="white", title="Risk Severity")
              pdf_bar.update_xaxes(tickfont=dict(color="black"), title_font=dict(color="black"), linecolor="black")
@@ -684,8 +693,9 @@ div.stDownloadButton > button:hover {
              pdf_pie = go.Figure(pie_fig)
              pdf_pie.update_layout(font=dict(color="black"), paper_bgcolor="white", plot_bgcolor="white", title="Risk Contribution")
 
-             bar_img_bytes = pdf_bar.to_image(format="png", width=350, height=280, scale=2)
-             pie_img_bytes = pdf_pie.to_image(format="png", width=350, height=280, scale=2)
+             # Export to image bytes
+             bar_img_bytes = pdf_bar.to_image(format="png", engine="kaleido", width=350, height=280, scale=2)
+             pie_img_bytes = pdf_pie.to_image(format="png", engine="kaleido", width=350, height=280, scale=2)
              
              bar_rl = RLImage(BytesIO(bar_img_bytes), width=3.2*inch, height=2.5*inch)
              pie_rl = RLImage(BytesIO(pie_img_bytes), width=3.2*inch, height=2.5*inch)
@@ -694,13 +704,13 @@ div.stDownloadButton > button:hover {
              chart_table = Table([[bar_rl, pie_rl]], colWidths=[3.3*inch, 3.3*inch])
              chart_table.setStyle(TableStyle([
                  ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                 ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#e2e8f0")), # Clean thick border
+                 ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor("#e2e8f0")), # Polaroid frame look
                  ('BOTTOMPADDING', (0,0), (-1,-1), 15),
                  ('TOPPADDING', (0,0), (-1,-1), 10)
              ]))
              elements.append(chart_table)
          except Exception as e:
-             elements.append(Paragraph("<font color='red'><i>* Note: Charts could not be generated. Please run 'pip install -U kaleido' in your terminal.</i></font>", normal_style))
+             elements.append(Paragraph("<font color='red'><i>* Note: Charts could not be generated. Please run 'pip install -U kaleido' in your terminal and reboot the Streamlit App.</i></font>", normal_style))
          
          elements.append(Spacer(1, 0.2 * inch))
 
