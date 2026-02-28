@@ -467,7 +467,7 @@ def prediction_page():
         backdrop-filter: blur(15px);
         border-radius: 14px !important;
         border: 1.5px solid rgba(255,255,255,0.35) !important;
-        color: white !important;
+        color: black !important;
         }
 
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
@@ -1102,3 +1102,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
