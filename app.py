@@ -926,11 +926,7 @@ div.stDownloadButton > button:hover {
          elements.append(table)
          elements.append(Spacer(1, 0.4 * inch))
 
-        # -----------------------------
-        # 2. Clinical Inputs Table (All 9 Inputs)
-        # -----------------------------
-         elements.append(Paragraph("Clinical Inputs", styles["Heading2"]))
-         elements.append(Spacer(1, 0.2 * inch))
+       
 
        
 
@@ -1188,6 +1184,7 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
 
