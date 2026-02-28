@@ -124,7 +124,7 @@ div[data-testid="stForm"] {{
 
     /* Title styling */
     h1 {{
-        color: white !important;
+        color: black !important;
         text-align: center;
         font-weight: 700;
         font-size: 40px;
@@ -194,7 +194,7 @@ input, textarea {{
     /* Button Styling */
     div[data-testid="stForm"] button {{
         background: linear-gradient(90deg, #1f8ef1, #005bea);
-        color: white !important;
+        color: black !important;
         border-radius: 12px !important;
         height: 50px !important;
         font-size: 18px !important;
@@ -414,7 +414,7 @@ def prediction_page():
 
 
      h1, h2, h3 {
-     color: white !important;
+     color: black !important;
        }
 
      p, li {
@@ -457,7 +457,7 @@ def prediction_page():
         section[data-testid="stSidebar"] h3,
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] p {
-        color: white !important;
+        color: black !important;
         font-weight: 600;
         }
 
@@ -548,7 +548,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
 /* ===== FIX DOWNLOAD BUTTON VISIBILITY ===== */
 div.stDownloadButton > button {
     background-color: #0f172a !important;   /* dark navy */
-    color: white !important;
+    color: black !important;
     font-weight: 700 !important;
     border-radius: 12px !important;
     padding: 10px 20px !important;
@@ -966,11 +966,11 @@ div.stDownloadButton > button:hover {
             marker=dict(
             color=cause_values,      # Color intensity based on value
             colorscale="Reds",       # Red gradient
-             line=dict(color="white", width=2)
+             line=dict(color="black", width=2)
             ),
 
             textfont=dict(
-            color="white",
+            color="black",
             size=16
 )
         ))
@@ -980,25 +980,25 @@ div.stDownloadButton > button:hover {
             xaxis_title="Causes",
             yaxis_title="Severity Level",
 
-             paper_bgcolor="rgba(0,0,0,0)",   # Removes white background
-            plot_bgcolor="rgba(0,0,0,0)",    # Removes inner white area
+             paper_bgcolor="rgba(0,0,0,0)",   # Removes black background
+            plot_bgcolor="rgba(0,0,0,0)",    # Removes inner black area
 
-            font=dict(color="white"),        # Makes text visible
+            font=dict(color="black"),        # Makes text visible
             autosize=True,
            # height=400,
             margin=dict(l=20, r=20, t=50, b=20),
         )
 
-         bar_fig.update_xaxes(tickfont=dict(color="white", size=14),
+         bar_fig.update_xaxes(tickfont=dict(color="black", size=14),
                               
-               title_font=dict(color="white", size=16),
+               title_font=dict(color="black", size=16),
               showline=True,
-              linecolor="white")
-         bar_fig.update_yaxes(tickfont=dict(color="white", size=14),
-                title_font=dict(color="white", size=16),
+              linecolor="black")
+         bar_fig.update_yaxes(tickfont=dict(color="black", size=14),
+                title_font=dict(color="black", size=16),
               showgrid=True,
                gridcolor="rgba(255,255,255,0.25)",
-                zerolinecolor="white"
+                zerolinecolor="black"
                 )
 
 
@@ -1020,7 +1020,7 @@ div.stDownloadButton > button:hover {
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
 
-            font=dict(color="white"),
+            font=dict(color="black"),
             autosize=True,
             #height=400,
             margin=dict(l=20, r=20, t=50, b=20),
@@ -1102,6 +1102,7 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
 
