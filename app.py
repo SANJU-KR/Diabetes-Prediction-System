@@ -310,70 +310,76 @@ def prediction_page():
     """, unsafe_allow_html=True)
        
     # -----------------------------
-    # SOLID WHITE Sidebar Styling (Updated)
+    # ORIGINAL GLASS SIDEBAR STYLING
     # -----------------------------
        st.markdown("""
         <style>
         section[data-testid="stSidebar"] {
-            background-color: #ffffff !important; /* Solid White Background */
-            border-right: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(15px);
+           -webkit-backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 4px 0 30px rgba(0,0,0,0.4);
             padding: 25px;
         }
         
-        /* Make Sidebar Text Dark/Black for readability on white background */
+        /* Make Sidebar Text White */
         section[data-testid="stSidebar"] h1, 
         section[data-testid="stSidebar"] h2,
         section[data-testid="stSidebar"] h3, 
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] p,
         section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] { 
-            color: #0f172a !important; 
+            color: white !important; 
             font-weight: 600; 
         }
 
-        /* Sidebar Input Boxes */
+        /* Sidebar Input Boxes Glass Effect */
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
         section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-            background: #f8fafc !important; /* Very light gray */
-            border-radius: 8px !important;
-            border: 1px solid #cbd5e1 !important;
-            color: black !important;
+            background: rgba(255,255,255,0.10) !important;
+            backdrop-filter: blur(15px);
+            border-radius: 14px !important;
+            border: 1.5px solid rgba(255,255,255,0.35) !important;
+            color: white !important;
         }
 
         section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
         section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-            border: 1.5px solid #005bea !important;
-            box-shadow: 0 0 5px rgba(0, 91, 234, 0.3);
+            border: 1.5px solid rgba(255,255,255,0.8) !important;
+            box-shadow: 0 0 15px rgba(255,255,255,0.6);
         }
 
         /* Sidebar Buttons */
         section[data-testid="stSidebar"] button {
-            background: #0f172a !important;
-            border-radius: 8px !important;
-            border: none !important;
+            background: rgba(255,255,255,0.15) !important;
+            backdrop-filter: blur(15px);
+            border-radius: 12px !important;
+            border: 1px solid rgba(255,255,255,0.4) !important;
             color: white !important;
             font-weight: 600 !important;
             transition: 0.3s ease;
         }
         section[data-testid="stSidebar"] button:hover { 
-            background: #005bea !important; 
-            transform: scale(1.02); 
+            background: rgba(255,255,255,0.25) !important; 
+            transform: scale(1.03); 
         }
        </style>
        """, unsafe_allow_html=True)
 
        st.markdown("""
 <style>
-/* Dropdown popup background (Now Light for White Sidebar) */
-div[data-baseweb="popover"] { background: #ffffff !important; border: 1px solid #cbd5e1; }
-ul[role="listbox"] { background: #ffffff !important; }
-li[role="option"] { background: #ffffff !important; color: black !important; font-weight: 600 !important; }
-li[role="option"]:hover { background: #f1f5f9 !important; color: #005bea !important; }
+/* Dropdown popup background (Dark) */
+div[data-baseweb="popover"] { background: midnightblue !important; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px); }
+ul[role="listbox"] { background: midnightblue !important; }
+li[role="option"] { background: transparent !important; color: white !important; font-weight: 600 !important; }
+li[role="option"]:hover { background: #00d4ff !important; color: black !important; }
 
 /* Selected dropdown value text */
 section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: black !important; font-weight: 600 !important; }
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div { background-color: #f1f5f9 !important; color: black !important; }
 
-/* Text Inputs (Number of Pregnancies, BMI, etc.) */
+/* Text Inputs (Number of Pregnancies, BMI, etc.) so typing is black */
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {
     color: black !important;
     -webkit-text-fill-color: black !important;
