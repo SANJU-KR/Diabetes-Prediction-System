@@ -626,17 +626,7 @@ div.stDownloadButton > button:hover {
     st.markdown("""
 <style>
 
-/* Remove (+ - buttons hatane ke liye)  */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
 
-input[type="number"] {
-    -moz-appearance: textfield;
-}
-/* here */
 
 </style>
 """, unsafe_allow_html=True)
@@ -1128,6 +1118,7 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
 
