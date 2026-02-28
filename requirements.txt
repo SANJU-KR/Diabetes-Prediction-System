@@ -21,7 +21,7 @@ requests
 
 pycountry
 phonenumbers
-
+kaleido
 
 #streamlit
 #altair
@@ -41,3 +41,4 @@ phonenumbers
 #pymongo==4.7.2
 
 #pytz==2024.1
+
