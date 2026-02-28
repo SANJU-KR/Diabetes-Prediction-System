@@ -539,6 +539,8 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     color: black !important;
 }
 
+/* For (Number of Pregnancies) 👇 */
+
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {
     color: black !important;
     -webkit-text-fill-color: black !important;
@@ -1108,4 +1110,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
