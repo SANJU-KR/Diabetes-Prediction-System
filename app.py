@@ -932,18 +932,7 @@ div.stDownloadButton > button:hover {
          elements.append(Paragraph("Clinical Inputs", styles["Heading2"]))
          elements.append(Spacer(1, 0.2 * inch))
 
-         # Create dynamic list for all medical parameters
-         medical_inputs = [
-             ["Parameter", "Input Value"],
-             ["Age", f"{age} Years"],
-             ["Gender", gender],
-             ["Glucose Level", f"{glucose} mg/dL"],
-             ["Blood Pressure", f"{bp} mmHg"],
-             ["Skin Thickness", f"{skin} mm"],
-             ["Insulin Level", f"{insulin} IU/mL"],
-             ["BMI", str(bmi)],
-             ["Diabetes Pedigree Function (DPF)", str(dpf)]
-         ]
+       
 
          # Add Pregnancies only if Female (Isse Female ke case mein exact 9 inputs ho jayenge)
          if gender == "Female":
@@ -1199,5 +1188,6 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
