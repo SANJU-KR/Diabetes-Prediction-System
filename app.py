@@ -1,3 +1,10 @@
+Sanju bhai, ab main samajh gaya problem! Aapko "Age", "Number of Pregnancies", aur "BMI" wale number input boxes ka background color ekdum white chahiye, bilkul "Gender" wale dropdown jaisa. Aur usme jo + aur - wale buttons hain, wo bhi hide karne hain.
+
+Maine CSS mein exactly wahi changes kar diye hain. Main aapko wahi code waapas bhej raha hu jisme ab **saare input boxes ekdum white aur clean dikhenge**.
+
+Aap apni `app.py` ka poora code is naye code se replace kar lijiye:
+
+```python
 # -----------------------------
 # Import Required Libraries
 # -----------------------------
@@ -335,22 +342,6 @@ def prediction_page():
             font-weight: 600; 
         }
 
-        /* Sidebar Input Boxes Glass Effect */
-        section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
-        section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-            background: rgba(255,255,255,0.10) !important;
-            backdrop-filter: blur(15px);
-            border-radius: 14px !important;
-            border: 1.5px solid rgba(255,255,255,0.35) !important;
-            color: white !important;
-        }
-
-        section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
-        section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-            border: 1.5px solid rgba(255,255,255,0.8) !important;
-            box-shadow: 0 0 15px rgba(255,255,255,0.6);
-        }
-
         /* Sidebar Buttons */
         section[data-testid="stSidebar"] button {
             background: rgba(255,255,255,0.15) !important;
@@ -378,16 +369,31 @@ li[role="option"]:hover { background: #00d4ff !important; color: black !importan
 
 /* Selected dropdown value text */
 section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: black !important; font-weight: 600 !important; }
-section[data-testid="stSidebar"] div[data-baseweb="select"] > div { background-color: #f1f5f9 !important; color: black !important; }
 
-/* Text Inputs (Number of Pregnancies, BMI, etc.) so typing is black */
+
+/* 🔥 NEW FIX: Make ALL input boxes and dropdowns white/light gray 🔥 */
+section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #f1f5f9 !important;   /* light gray */
+    color: black !important;
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(255,255,255,0.35) !important;
+}
+
+section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
+    border: 1.5px solid rgba(255,255,255,0.8) !important;
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+
+/* Text color inside the inputs */
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {
     color: black !important;
     -webkit-text-fill-color: black !important;
     font-weight: 600 !important;
 }
 
-/* Hide +/- Buttons */
+/* 🔥 Hide +/- Buttons 🔥 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none; margin: 0;
@@ -746,4 +752,4 @@ if not st.session_state.registered:
 else:
     prediction_page()
 
-
+```
