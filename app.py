@@ -511,7 +511,7 @@ ul[role="listbox"] {
 /* Each dropdown option */
 li[role="option"] {
     background: #1e2a4a !important;
-    color: white !important;
+    color: black !important;
     font-weight: 600 !important;
 }
 
@@ -1102,6 +1102,7 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
 
 
