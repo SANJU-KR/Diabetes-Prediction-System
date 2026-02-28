@@ -897,20 +897,46 @@ div.stDownloadButton > button:hover {
             ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
         ]))
 
-         # .... Oopar ka code same rahega ....
+# -----------------------------
+        # 1. Patient Information Table (Rearranged & Complete)
+        # -----------------------------
+         patient_table = [
+            ["Patient ID", info.get("_id", "N/A")],
+            ["Full Name", info.get("name", "N/A")],
+            ["Email Address", info.get("email", "N/A")],
+            ["Phone Number", info.get("phone", "N/A")],
+            ["Country", info.get("country", "N/A")],
+            ["Address", info.get("address", "N/A")]
+         ]
+
+         # Format Patient Table
+         table = Table(patient_table, colWidths=[2.2*inch, 3*inch])
+         table.setStyle(TableStyle([
+            ("GRID", (0,0), (-1,-1), 1, colors.grey),
+            ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("ALIGN", (0,0), (-1,-1), "LEFT"),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+            ("TOPPADDING", (0,0), (-1,-1), 8),
+        ]))
+
          elements.append(Paragraph("Patient Information", styles["Heading2"]))
          elements.append(Spacer(1, 0.2 * inch))
          elements.append(table)
          elements.append(Spacer(1, 0.4 * inch))
 
-        # 👇👇👇 YAHAN SE NAYA CODE PASTE KARNA SHURU KARO 👇👇👇
-         
+        # -----------------------------
+        # 2. Clinical Inputs Table (All 9 Inputs)
+        # -----------------------------
          elements.append(Paragraph("Clinical Inputs", styles["Heading2"]))
          elements.append(Spacer(1, 0.2 * inch))
 
-         # Create dynamic list for medical parameters
+         # Create dynamic list for all medical parameters
          medical_inputs = [
              ["Parameter", "Input Value"],
+             ["Age", f"{age} Years"],
+             ["Gender", gender],
              ["Glucose Level", f"{glucose} mg/dL"],
              ["Blood Pressure", f"{bp} mmHg"],
              ["Skin Thickness", f"{skin} mm"],
@@ -919,6 +945,24 @@ div.stDownloadButton > button:hover {
              ["Diabetes Pedigree Function (DPF)", str(dpf)]
          ]
 
+         # Add Pregnancies only if Female (Isse Female ke case mein exact 9 inputs ho jayenge)
+         if gender == "Female":
+             medical_inputs.insert(3, ["Number of Pregnancies", str(pregnancies)])
+
+         # Format Medical Table
+         med_table = Table(medical_inputs, colWidths=[2.2*inch, 3*inch])
+         med_table.setStyle(TableStyle([
+             ("GRID", (0,0), (-1,-1), 1, colors.grey),
+             ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+             ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+             ("ALIGN", (0,0), (-1,-1), "LEFT"),
+             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+             ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+             ("TOPPADDING", (0,0), (-1,-1), 8),
+         ]))
+
+         elements.append(med_table)
+         elements.append(Spacer(1, 0.4 * inch))
          # Add Pregnancies only if Female
          if gender == "Female":
              medical_inputs.insert(1, ["Number of Pregnancies", str(pregnancies)])
@@ -1155,4 +1199,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
