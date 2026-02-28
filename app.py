@@ -1,10 +1,3 @@
-Sanju bhai, ab main samajh gaya problem! Aapko "Age", "Number of Pregnancies", aur "BMI" wale number input boxes ka background color ekdum white chahiye, bilkul "Gender" wale dropdown jaisa. Aur usme jo + aur - wale buttons hain, wo bhi hide karne hain.
-
-Maine CSS mein exactly wahi changes kar diye hain. Main aapko wahi code waapas bhej raha hu jisme ab **saare input boxes ekdum white aur clean dikhenge**.
-
-Aap apni `app.py` ka poora code is naye code se replace kar lijiye:
-
-```python
 # -----------------------------
 # Import Required Libraries
 # -----------------------------
@@ -751,5 +744,3 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
-
-```
