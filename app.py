@@ -897,10 +897,53 @@ div.stDownloadButton > button:hover {
             ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
         ]))
 
+         # .... Oopar ka code same rahega ....
          elements.append(Paragraph("Patient Information", styles["Heading2"]))
          elements.append(Spacer(1, 0.2 * inch))
          elements.append(table)
          elements.append(Spacer(1, 0.4 * inch))
+
+        # 👇👇👇 YAHAN SE NAYA CODE PASTE KARNA SHURU KARO 👇👇👇
+         
+         elements.append(Paragraph("Clinical Inputs", styles["Heading2"]))
+         elements.append(Spacer(1, 0.2 * inch))
+
+         # Create dynamic list for medical parameters
+         medical_inputs = [
+             ["Parameter", "Input Value"],
+             ["Glucose Level", f"{glucose} mg/dL"],
+             ["Blood Pressure", f"{bp} mmHg"],
+             ["Skin Thickness", f"{skin} mm"],
+             ["Insulin Level", f"{insulin} IU/mL"],
+             ["BMI", str(bmi)],
+             ["Diabetes Pedigree Function (DPF)", str(dpf)]
+         ]
+
+         # Add Pregnancies only if Female
+         if gender == "Female":
+             medical_inputs.insert(1, ["Number of Pregnancies", str(pregnancies)])
+
+         # Format the table
+         med_table = Table(medical_inputs, colWidths=[2.2*inch, 3*inch])
+         med_table.setStyle(TableStyle([
+             ("GRID", (0,0), (-1,-1), 1, colors.grey),
+             ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+             ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+             ("ALIGN", (0,0), (-1,-1), "LEFT"),
+             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+             ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+             ("TOPPADDING", (0,0), (-1,-1), 8),
+         ]))
+
+         elements.append(med_table)
+         elements.append(Spacer(1, 0.4 * inch))
+         
+        # 👆👆👆 YAHAN TAK PASTE KARO 👆👆👆
+
+        # Risk Factors Section
+         elements.append(Paragraph("Risk Factor Analysis", styles["Heading2"]))
+         elements.append(Spacer(1, 0.2 * inch))
+        # .... Neeche ka code same rahega ....
 
         # Risk Factors Section
          elements.append(Paragraph("Risk Factor Analysis", styles["Heading2"]))
@@ -1112,3 +1155,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
