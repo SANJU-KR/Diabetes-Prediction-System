@@ -613,7 +613,7 @@ div.stDownloadButton > button:hover {
        st.sidebar.markdown("---")
        st.sidebar.markdown("### Medical Inputs")
 
-       age = st.sidebar.slider("Age", 21, 100, 30)
+       age = st.sidebar.number_input("Age", 21, 100, 30)
 
        gender = st.sidebar.selectbox(
         "Gender",
@@ -1102,3 +1102,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
