@@ -434,68 +434,71 @@ def prediction_page():
 
   
 
-    # -----------------------------
-    # Sidebar Styling (FIXED)
-    # -----------------------------
-
- # -----------------------------
-    # Glass Sidebar Styling
-    # -----------------------------
-       st.markdown("""
-            <style>
-            section[data-testid="stSidebar"] {
-            background: rgba(300,300,300,0.10) !important;
-            backdrop-filter: blur(7px);
-           -webkit-backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(300,300,300,0.1o);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.4);
-            padding: 25px;
-           }
-
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] label,
-        section[data-testid="stSidebar"] p {
-        color: white !important;
-        font-weight: 600;
-        }
-
-        section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
-        section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        background: rgba(255,255,255,255.10) !important;
-        backdrop-filter: blur(15px);
-        border-radius: 14px !important;
-        border: 1.5px solid rgba(255,255,255,0.35) !important;
-        color: white !important;
-        }
-
-        section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
-        section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-        border: 1.5px solid rgba(255,255,255,0.8) !important;
-        box-shadow: 0 0 15px rgba(255,255,255,0.6);
-        }
-
-        section[data-testid="stSidebar"] button {
-        background: rgba(255,255,255,0.15) !important;
-        backdrop-filter: blur(15px);
-        border-radius: 12px !important;
-        border: 1px solid rgba(255,255,255,0.4) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        transition: 0.3s ease;
-        }
-
-        section[data-testid="stSidebar"] button:hover {
-        background: rgba(255,255,255,0.25) !important;
-        transform: scale(1.03);
-        }
-
-       </style>
-       """, unsafe_allow_html=True)
-
-       st.markdown("""
+   st.markdown("""
 <style>
+
+/* ===== SIDEBAR GLASS STYLE ===== */
+section[data-testid="stSidebar"] {
+    background: rgba(255,255,255,0.10) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+    padding: 25px;
+}
+
+/* Sidebar headings & labels */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* ===== INPUT BOX STYLE ===== */
+section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #f1f5f9 !important;   /* Light background */
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(255,255,255,0.35) !important;
+}
+
+/* ✅ IMPORTANT FIX – NUMBER INPUT TEXT BLACK */
+section[data-testid="stSidebar"] input {
+    color: black !important;
+    font-weight: 600 !important;
+}
+
+/* Select text black */
+section[data-testid="stSidebar"] div[data-baseweb="select"] span {
+    color: black !important;
+}
+
+/* Focus effect */
+section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
+    border: 1.5px solid #00d4ff !important;
+    box-shadow: 0 0 10px rgba(0,212,255,0.6);
+}
+
+/* Button Style */
+section[data-testid="stSidebar"] button {
+    background: rgba(255,255,255,0.15) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+section[data-testid="stSidebar"] button:hover {
+    background: rgba(255,255,255,0.25) !important;
+    transform: scale(1.03);
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 /* Dropdown popup background */
 div[data-baseweb="popover"] {
@@ -1102,4 +1105,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
