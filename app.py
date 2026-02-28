@@ -169,51 +169,88 @@ def inject_premium_css(img_b64):
         color: white !important;
     }}
 
-    /* 🔥 EXACT FIX: White Inputs in Sidebar & Main Page 🔥 */
+    /* =========================================
+       ULTRA-PREMIUM INPUT STYLING (THE FIX)
+       ========================================= */
+    /* Target ALL input containers */
     div[data-baseweb="input"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="textarea"] > div {{
-        background-color: #f8fafc !important; /* Pure light gray/white */
+        background-color: #ffffff !important; 
         border-radius: 12px !important;
-        border: 1.5px solid #cbd5e1 !important;
-        color: #0f172a !important; /* Dark text */
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.3s;
+        border: 2px solid #cbd5e1 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow: hidden !important;
     }}
+
+    /* Focus State (Neon Glow Effect) */
     div[data-baseweb="input"] > div:focus-within,
     div[data-baseweb="select"] > div:focus-within,
     div[data-baseweb="textarea"] > div:focus-within {{
-        border: 2px solid #0ea5e9 !important;
-        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3) !important;
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.25), 0 4px 10px rgba(14, 165, 233, 0.3) !important;
     }}
     
-    /* Text color inside input boxes */
-    div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea {{
+    /* Input Text Color */
+    div[data-baseweb="input"] input, 
+    div[data-baseweb="textarea"] textarea {{
         color: #0f172a !important;
         -webkit-text-fill-color: #0f172a !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-    }}
-    
-    /* Dropdown text color */
-    div[data-baseweb="select"] span {{
-        color: #0f172a !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        padding-left: 15px !important;
     }}
 
-    /* Hide Number Input +/- Buttons completely */
+    /* 🚨 FIX: Force Dropdown Text to be Black 🚨 */
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div,
+    div[data-baseweb="select"] svg {{
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        fill: #0f172a !important;
+    }}
+
+    /* 🚨 FIX: Dropdown List Menu (The popup) 🚨 */
+    ul[role="listbox"] {{
+        background-color: #ffffff !important;
+        border-radius: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+    }}
+    ul[role="listbox"] li {{
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        padding: 12px 15px !important;
+        transition: background-color 0.2s;
+    }}
+    ul[role="listbox"] li:hover {{
+        background-color: #e0f2fe !important; /* Light blue highlight */
+        color: #0284c7 !important;
+    }}
+
+    /* 🚨 FIX: Completely hide Streamlit's native +/- buttons on Number Inputs 🚨 */
+    button[aria-label="Step up"],
+    button[aria-label="Step down"],
+    div[data-testid="stNumberInputStepUp"],
+    div[data-testid="stNumberInputStepDown"] {{
+        display: none !important;
+    }}
+    
+    /* Remove default webkit spinners */
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {{
         -webkit-appearance: none; margin: 0;
     }}
     input[type="number"] {{ -moz-appearance: textfield; }}
 
-    /* Sidebar Sliders Theme */
-    div[data-baseweb="slider"] div[data-testid="stTickBar"] {{ display: none; }}
-    div[data-baseweb="slider"] div[role="slider"] {{
-        background-color: #0ea5e9 !important;
-        border: 2px solid white !important;
-        box-shadow: 0 0 10px rgba(14,165,233,0.8);
+    /* Slider Thumb Value Popup */
+    div[data-testid="stThumbValue"] {{
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        background: #0ea5e9 !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
     }}
 
     /* Primary Action Buttons */
@@ -230,7 +267,7 @@ def inject_premium_css(img_b64):
         height: 50px !important;
     }}
     button[kind="primary"]:hover, div[data-testid="stForm"] button:hover {{
-        transform: translateY(-2px) scale(1.02) !important;
+        transform: translateY(-3px) scale(1.02) !important;
         box-shadow: 0 8px 25px rgba(14, 165, 233, 0.6) !important;
     }}
 
@@ -258,6 +295,7 @@ def inject_premium_css(img_b64):
         font-size: 16px !important;
         font-weight: 600 !important;
         letter-spacing: 0.3px;
+        margin-bottom: 6px !important;
     }}
     </style>
     """, unsafe_allow_html=True)
