@@ -539,6 +539,12 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     color: black !important;
 }
 
+section[data-testid="stSidebar"] div[data-baseweb="input"] input {
+    color: black !important;
+    -webkit-text-fill-color: black !important;
+    font-weight: 600 !important;
+}
+
 </style>
 """, unsafe_allow_html=True) 
        
@@ -1102,3 +1108,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
