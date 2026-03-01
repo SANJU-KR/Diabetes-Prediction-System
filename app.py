@@ -1118,4 +1118,3 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
-    
