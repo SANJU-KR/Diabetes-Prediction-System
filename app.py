@@ -342,8 +342,7 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
         "MEDICAL DISCLAIMER: This report is AI-generated and does not replace professional medical advice.")
     c.drawString(M, 5 * mm,
         "Consult a qualified healthcare professional for clinical diagnosis, interpretation, and treatment.")
-    c.setFont("Helvetica", 7)
-    c.drawRightString(W - M, 7 * mm,
+  
         
 
     c.save()
@@ -1083,4 +1082,5 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
 
