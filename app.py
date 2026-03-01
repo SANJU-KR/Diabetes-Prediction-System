@@ -127,182 +127,233 @@ def _make_pie_buf(labels, values):
 def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
                         pregnancies, prob_positive, risk_label, current_time,
                         cause_labels, cause_values, recs_for_pdf):
+    """Canvas-based A4 hospital report — 1 page, uniform cell colour, auto-fit text."""
+    import math
     W, H = A4
-    M  = 17 * mm
+    M  = 13 * mm
     CW = W - 2 * M
 
-    NAVY    = rl_colors.HexColor("#0a1f3d")
-    TEAL    = rl_colors.HexColor("#006e8c")
-    WHITE   = rl_colors.white
-    BLACK   = rl_colors.HexColor("#0f172a")
-    GRY_T   = rl_colors.HexColor("#475569")
-    GRY_L   = rl_colors.HexColor("#f1f5f9")
-    GRY_R   = rl_colors.HexColor("#cbd5e1")
-    ROW_ALT = rl_colors.HexColor("#eef4f8")
-    GREEN_C = rl_colors.HexColor("#047857")
-    GREEN_B = rl_colors.HexColor("#ecfdf5")
-    AMBR_C  = rl_colors.HexColor("#d97706")
-    AMBR_B  = rl_colors.HexColor("#fffbeb")
-    RED_C   = rl_colors.HexColor("#b91c1c")
-    RED_B   = rl_colors.HexColor("#fef2f2")
+    # ── Palette ──────────────────────────────────────────────
+    NAVY     = rl_colors.HexColor("#0b1f3a")
+    TEAL     = rl_colors.HexColor("#0e7490")
+    TEAL_DIM = rl_colors.HexColor("#0c6782")
+    CELL_BG  = rl_colors.HexColor("#f0f9ff")   # ONE uniform colour — every cell
+    CELL_DIV = rl_colors.HexColor("#bae6fd")
+    LBL_C    = rl_colors.HexColor("#64748b")
+    VAL_C    = rl_colors.HexColor("#0f172a")
+    WHITE    = rl_colors.white
+    SLATE    = rl_colors.HexColor("#334155")
+    GREY_BG  = rl_colors.HexColor("#f8fafc")
+    ICE      = rl_colors.HexColor("#e0f2fe")
+    GREEN    = rl_colors.HexColor("#047857")
+    GREEN_BG = rl_colors.HexColor("#f0fdf4")
+    AMBER    = rl_colors.HexColor("#b45309")
+    AMBER_BG = rl_colors.HexColor("#fffbeb")
+    RED      = rl_colors.HexColor("#b91c1c")
+    RED_BG   = rl_colors.HexColor("#fff5f5")
 
     buf = BytesIO()
     c   = rl_canvas.Canvas(buf, pagesize=A4)
 
-    BH = 28 * mm
-    c.setFillColor(NAVY)
-    c.rect(0, H - BH, W, BH, fill=1, stroke=0)
+    # ── HEADER ───────────────────────────────────────────────
+    BH = 20 * mm
+    c.setFillColor(NAVY); c.rect(0, H-BH, W, BH, fill=1, stroke=0)
+    c.setFillColor(TEAL); c.rect(0, H-2*mm, W, 2*mm, fill=1, stroke=0)  # top stripe
 
     c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 13.5)
-    c.drawString(M, H - 10 * mm, "Diabetes Prediction System")
-    c.setFillColor(rl_colors.HexColor("#93c5fd")); c.setFont("Helvetica", 7.5)
-    c.drawString(M, H - 16.5 * mm,
-                 "AI-Powered Clinical Risk Assessment  ·  SVM Architecture")
+    c.drawString(M, H-8*mm, "Diabetes Prediction System")
+    c.setFillColor(rl_colors.HexColor("#7dd3fc")); c.setFont("Helvetica", 7)
+    c.drawString(M, H-14*mm, "Clinical AI Risk Assessment  ·  Confidential")
 
-    pid_display = info.get('_id', 'N/A').replace('-', '')
-    c.setFillColor(rl_colors.HexColor("#93c5fd")); c.setFont("Helvetica", 7.5)
-    c.drawRightString(W - M, H - 9 * mm,  f"Report ID: {pid_display}")
-    c.drawRightString(W - M, H - 15 * mm,
-                      f"Generated: {current_time.strftime('%d %B %Y | %I:%M %p (IST)')}")
-    c.drawRightString(W - M, H - 21 * mm, "CONFIDENTIAL MEDICAL DOCUMENT")
+    pid_display = info.get("_id", "N/A").replace("-", "")
+    c.setFillColor(rl_colors.HexColor("#7dd3fc")); c.setFont("Helvetica", 7)
+    c.drawRightString(W-M, H-8*mm,  f"ID  {pid_display}")
+    c.drawRightString(W-M, H-14*mm, current_time.strftime("%d %B %Y"))
 
-    y = H - BH - 8 * mm
+    y = H - BH - 5*mm
 
-    c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(W / 2, y, "DIABETES RISK PREDICTION REPORT")
-    y -= 3.5 * mm
-    c.setStrokeColor(TEAL); c.setLineWidth(2)
-    c.line(M, y, W - M, y)
-    y -= 8 * mm
+    # ── TITLE ────────────────────────────────────────────────
+    c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 13)
+    c.drawCentredString(W/2, y, "DIABETES RISK ASSESSMENT REPORT")
+    y -= 2*mm
+    c.setStrokeColor(TEAL);    c.setLineWidth(2);   c.line(M, y, W-M, y)
+    y -= 1*mm
+    c.setStrokeColor(CELL_DIV); c.setLineWidth(0.5); c.line(M, y, W-M, y)
+    y -= 4.5*mm
 
-    def sec_head(cx, cy, label, w):
-        c.setFillColor(TEAL)
-        c.rect(cx, cy - 6 * mm, w, 6 * mm, fill=1, stroke=0)
-        c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 8.5)
-        c.drawString(cx + 3 * mm, cy - 4 * mm, label.upper())
-        return cy - 6 * mm
+    # ── HELPERS ──────────────────────────────────────────────
+    SH = 6*mm
 
-    CELL_H = 14 * mm
+    def section(cy, label):
+        c.setFillColor(ICE); c.rect(M, cy-SH, CW, SH, fill=1, stroke=0)
+        c.setFillColor(TEAL); c.rect(M, cy-SH, 2.5*mm, SH, fill=1, stroke=0)
+        c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 7.8)
+        c.drawString(M+4.5*mm, cy-3.9*mm, label.upper())
+        return cy - SH
 
-    def grid_cell(cx, cy, label, value, cw, shade, last_col=False, last_row=False):
-        c.setFillColor(ROW_ALT if shade else WHITE)
-        c.rect(cx, cy - CELL_H, cw, CELL_H, fill=1, stroke=0)
-        c.setStrokeColor(GRY_R); c.setLineWidth(0.4)
-        if not last_col:
-            c.line(cx + cw, cy - CELL_H, cx + cw, cy)
-        c.line(cx, cy - CELL_H, cx + cw, cy - CELL_H)
-        c.setFillColor(GRY_T); c.setFont("Helvetica-Bold", 7)
-        c.drawString(cx + 2.5 * mm, cy - 5 * mm, str(label).upper())
-        c.setFillColor(BLACK); c.setFont("Helvetica-Bold", 8.5)
-        v = str(value)
-        max_w = cw - 5 * mm
-        while c.stringWidth(v, "Helvetica-Bold", 8.5) > max_w and len(v) > 4:
-            v = v[:-3] + ".."
-        c.drawString(cx + 2.5 * mm, cy - 11 * mm, v)
+    def smart_fit(text, avail_w, max_fs=8.0, min_fs=5.5):
+        """Shrink font to fit. If still too wide at min_fs, word-wrap to 2 lines."""
+        v = str(text)
+        fs = max_fs
+        c.setFont("Helvetica-Bold", fs)
+        while c.stringWidth(v, "Helvetica-Bold", fs) > avail_w and fs > min_fs:
+            fs -= 0.2
+        if c.stringWidth(v, "Helvetica-Bold", fs) <= avail_w:
+            return [v], fs
+        # Word-wrap: find split that balances both halves inside avail_w
+        words = v.split()
+        best_split, best_diff = 1, float("inf")
+        for i in range(1, len(words)):
+            l1 = " ".join(words[:i]); l2 = " ".join(words[i:])
+            d  = (abs(c.stringWidth(l1,"Helvetica-Bold",min_fs) -
+                      c.stringWidth(l2,"Helvetica-Bold",min_fs))
+                  + max(0, c.stringWidth(l1,"Helvetica-Bold",min_fs)-avail_w)*3
+                  + max(0, c.stringWidth(l2,"Helvetica-Bold",min_fs)-avail_w)*3)
+            if d < best_diff:
+                best_diff = d; best_split = i
+        l1 = " ".join(words[:best_split]); l2 = " ".join(words[best_split:])
+        c.setFont("Helvetica-Bold", min_fs)
+        # Hard-truncate each line if needed
+        while c.stringWidth(l1,"Helvetica-Bold",min_fs)>avail_w and len(l1)>3: l1=l1[:-2]+"…"
+        while c.stringWidth(l2,"Helvetica-Bold",min_fs)>avail_w and len(l2)>3: l2=l2[:-2]+"…"
+        return [l1, l2], min_fs
 
-    def outer_border(cx, cy, w, h):
-        c.setStrokeColor(TEAL); c.setLineWidth(0.8)
-        c.rect(cx, cy - h, w, h, fill=0, stroke=1)
+    CELL_H = 12.5*mm
 
-    pid_no_hyphen = info.get("_id", "N/A").replace("-", "")
-    p_fields = [
-        ("Patient ID",    pid_no_hyphen),
+    def draw_grid(cy, fields, ncols):
+        cw    = CW / ncols
+        nrows = math.ceil(len(fields) / ncols)
+        pad   = 2.5*mm
+        avail = cw - pad - 2*mm
+
+        for idx, (lbl, raw) in enumerate(fields):
+            row  = idx // ncols
+            col  = idx %  ncols
+            cx   = M + col * cw
+            top  = cy - row * CELL_H
+            bot  = top - CELL_H
+
+            # Uniform background — identical for every cell
+            c.setFillColor(CELL_BG)
+            c.rect(cx, bot, cw, CELL_H, fill=1, stroke=0)
+
+            # Internal dividers
+            c.setStrokeColor(CELL_DIV); c.setLineWidth(0.4)
+            if col < ncols - 1:
+                c.line(cx+cw, bot, cx+cw, top)  # vertical
+            c.line(cx, bot, cx+cw, bot)          # horizontal bottom
+
+            # Field label — tiny, muted
+            c.setFillColor(LBL_C); c.setFont("Helvetica-Bold", 5.8)
+            c.drawString(cx+pad, top-3.8*mm, lbl.upper())
+
+            # Field value — auto-fit
+            lines, fs = smart_fit(raw, avail)
+            c.setFillColor(VAL_C); c.setFont("Helvetica-Bold", fs)
+            if len(lines) == 1:
+                c.drawString(cx+pad, top-9.5*mm, lines[0])
+            else:
+                c.drawString(cx+pad, top-8.5*mm,  lines[0])
+                c.drawString(cx+pad, top-12.5*mm, lines[1])
+
+        total_h = nrows * CELL_H
+        c.setStrokeColor(TEAL); c.setLineWidth(1.4); c.line(M, cy, M+CW, cy)
+        c.setLineWidth(0.85)
+        c.rect(M, cy-total_h, CW, total_h, fill=0, stroke=1)
+        return cy - total_h
+
+    def mini_sec(cx, cy, w, label):
+        c.setFillColor(TEAL_DIM); c.rect(cx, cy-SH, w, SH, fill=1, stroke=0)
+        c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 7.2)
+        c.drawString(cx+3*mm, cy-3.8*mm, label.upper())
+        return cy - SH
+
+    # ── PATIENT PROFILE  3 × 2 ───────────────────────────────
+    y = section(y, "Patient Profile")
+    pid_clean = info.get("_id", "N/A").replace("-", "")
+    patient_fields = [
+        ("Patient ID",    pid_clean),
         ("Full Name",     info.get("name", "N/A")),
-        ("Phone Number",  info.get("phone", "N/A")),
+        ("Phone",         info.get("phone", "N/A")),
         ("Email Address", info.get("email", "N/A")),
         ("Country",       info.get("country", "N/A")),
-        ("Address",       info.get("address", "N/A")[:38] +
-                          ("…" if len(info.get("address", "")) > 38 else "")),
+        ("Address",       info.get("address", "N/A")),   # full — smart_fit wraps it
     ]
+    y = draw_grid(y, patient_fields, ncols=3)
+    y -= 3.5*mm
 
-    NCOLS_P  = 3
-    CELL_W_P = CW / NCOLS_P
-    NROWS_P  = 2
-    P_H      = NROWS_P * CELL_H
-
-    y = sec_head(M, y, "Patient Profile", CW) - 0 * mm
-    for idx, (lbl, val) in enumerate(p_fields):
-        row = idx // NCOLS_P
-        col = idx %  NCOLS_P
-        cx  = M + col * CELL_W_P
-        cy  = y - row * CELL_H
-        shade    = (row % 2 == 0)
-        last_col = (col == NCOLS_P - 1)
-        grid_cell(cx, cy, lbl, val, CELL_W_P, shade, last_col=last_col)
-    outer_border(M, y, CW, P_H)
-    y -= P_H + 7 * mm
-
-    cl_fields = [
-        ("Age",             f"{age} yrs"),
-        ("Gender",          gender),
-        ("Glucose Level",   f"{glucose} mg/dL"),
-        ("Blood Pressure",  f"{bp} mmHg"),
-        ("Skin Thickness",  f"{skin} mm"),
-        ("Insulin Level",   f"{insulin} IU/mL"),
-        ("BMI",             str(bmi)),
-        ("DPF",             str(dpf)),
+    # ── CLINICAL INPUTS  4 × 2 ───────────────────────────────
+    y = section(y, "Clinical Inputs")
+    clinical_fields = [
+        ("Age",            f"{age} yrs"),
+        ("Gender",         gender),
+        ("Glucose Level",  f"{glucose} mg/dL"),
+        ("Blood Pressure", f"{bp} mmHg"),
+        ("Skin Thickness", f"{skin} mm"),
+        ("Insulin Level",  f"{insulin} IU/mL"),
+        ("BMI",            f"{bmi} kg/m\u00b2"),
+        ("Diabetes PF",    str(dpf)),
     ]
     if gender == "Female":
-        cl_fields.insert(2, ("Pregnancies", str(pregnancies)))
+        clinical_fields.insert(2, ("Pregnancies", str(pregnancies)))
+    y = draw_grid(y, clinical_fields, ncols=4)
+    y -= 3.5*mm
 
-    import math
-    NCOLS_C  = 4
-    NROWS_C  = math.ceil(len(cl_fields) / NCOLS_C)
-    CELL_W_C = CW / NCOLS_C
-    C_H      = NROWS_C * CELL_H
-
-    y = sec_head(M, y, "Clinical Inputs", CW) - 0 * mm
-    for idx, (lbl, val) in enumerate(cl_fields):
-        row = idx // NCOLS_C
-        col = idx %  NCOLS_C
-        cx  = M + col * CELL_W_C
-        cy  = y - row * CELL_H
-        shade    = (row % 2 == 0)
-        last_col = (col == NCOLS_C - 1) or (idx == len(cl_fields) - 1)
-        grid_cell(cx, cy, lbl, val, CELL_W_C, shade, last_col=last_col)
-    outer_border(M, y, CW, C_H)
-    y -= C_H + 8 * mm
-
+    # ── RISK RESULT BANNER ────────────────────────────────────
     if prob_positive < 30:
-        BC, BG, BT = GREEN_C, GREEN_B, "LOW RISK  —  Diabetes Unlikely"
+        BC, BG, BT = GREEN, GREEN_BG, "LOW RISK — Diabetes Unlikely"
     elif prob_positive < 70:
-        BC, BG, BT = AMBR_C, AMBR_B, "MODERATE RISK  —  Possible Diabetes"
+        BC, BG, BT = AMBER, AMBER_BG, "MODERATE RISK — Possible Diabetes"
     else:
-        BC, BG, BT = RED_C,  RED_B,  "HIGH RISK  —  Diabetes Likely"
+        BC, BG, BT = RED, RED_BG, "HIGH RISK — Diabetes Likely"
 
-    BANh = 15 * mm
-    c.setFillColor(BC); c.rect(M, y - BANh, 3 * mm, BANh, fill=1, stroke=0)
-    c.setFillColor(BG); c.rect(M + 3 * mm, y - BANh, CW - 3 * mm, BANh, fill=1, stroke=0)
-    c.setStrokeColor(BC); c.setLineWidth(0.9)
-    c.rect(M, y - BANh, CW, BANh, fill=0, stroke=1)
-    c.setFillColor(BC); c.setFont("Helvetica-Bold", 12)
-    c.drawString(M + 6 * mm, y - 7 * mm, BT)
-    c.setFillColor(GRY_T); c.setFont("Helvetica", 8)
-    c.drawString(M + 6 * mm, y - 12.5 * mm,
-        f"Risk Percentage: {prob_positive:.1f}%   |   MEDCORE AI · SVM Engine   |   "
-        f"{current_time.strftime('%d %B %Y | %I:%M %p (IST)')}")
-    y -= BANh + 7 * mm
+    BNH = 11*mm
+    c.setFillColor(BC);  c.rect(M,      y-BNH, 3*mm,    BNH, fill=1, stroke=0)
+    c.setFillColor(BG);  c.rect(M+3*mm, y-BNH, CW-3*mm, BNH, fill=1, stroke=0)
+    c.setStrokeColor(BC); c.setLineWidth(0.8)
+    c.rect(M, y-BNH, CW, BNH, fill=0, stroke=1)
+    c.setFillColor(BC); c.setFont("Helvetica-Bold", 10.5)
+    c.drawString(M+5.5*mm, y-5.3*mm, BT)
+    c.setFillColor(BC); c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(W-M-3*mm, y-7*mm, f"{prob_positive:.1f}%")
+    c.setFillColor(SLATE); c.setFont("Helvetica", 6)
+    c.drawRightString(W-M-3*mm, y-10.5*mm, "probability score")
+    y -= BNH + 3*mm
 
-    y = sec_head(M, y, "Data Visualization & Analysis", CW) - 2 * mm
-    CH = 57 * mm
-    CW2 = (CW - 4 * mm) / 2
+    # ── DIAGNOSTIC VISUALISATION ──────────────────────────────
+    y = section(y, "Diagnostic Data Visualisation")
+    CH   = 48*mm
+    CW_h = (CW - 2*mm) / 2
 
-    bar_reader = ImageReader(_make_bar_buf(cause_labels, cause_values))
-    pie_reader = ImageReader(_make_pie_buf(cause_labels, cause_values))
-    c.drawImage(bar_reader, M,            y - CH, width=CW2, height=CH,
-                preserveAspectRatio=True, anchor="c")
-    c.drawImage(pie_reader, M + CW2 + 4 * mm, y - CH, width=CW2, height=CH,
-                preserveAspectRatio=True, anchor="c")
-    c.setStrokeColor(GRY_R); c.setLineWidth(0.5)
-    c.rect(M, y - CH, CW, CH, fill=0, stroke=1)
-    y -= CH + 7 * mm
+    c.setFillColor(GREY_BG); c.rect(M, y-CH, CW, CH, fill=1, stroke=0)
+    c.drawImage(ImageReader(_make_bar_buf(cause_labels, cause_values)),
+                M+0.5*mm,    y-CH+0.5*mm,
+                width=CW_h-0.5*mm, height=CH-1*mm,
+                preserveAspectRatio=True, anchor="nw")
+    c.drawImage(ImageReader(_make_pie_buf(cause_labels, cause_values)),
+                M+CW_h+2*mm, y-CH+0.5*mm,
+                width=CW_h-2*mm,   height=CH-1*mm,
+                preserveAspectRatio=True, anchor="nw")
+    c.setStrokeColor(CELL_DIV); c.setLineWidth(0.5)
+    c.line(M+CW_h+1*mm, y-CH+2*mm, M+CW_h+1*mm, y-2*mm)
+    c.setStrokeColor(TEAL); c.setLineWidth(0.85)
+    c.rect(M, y-CH, CW, CH, fill=0, stroke=1)
+    y -= CH + 3*mm
 
-    y = sec_head(M, y, "Risk Factor Analysis", CW) - 2 * mm
-    RFH = 6 * mm
+    # ── RISK FACTORS  |  RECOMMENDATIONS  (side by side) ─────
+    GAP    = 3*mm
+    LEFT_W = CW * 0.53
+    RGHT_W = CW - LEFT_W - GAP
+    LX     = M
+    RX     = M + LEFT_W + GAP
+
+    y_l = mini_sec(LX, y, LEFT_W, "Risk Factor Analysis")
+    y_r = mini_sec(RX, y, RGHT_W, "Recommendations")
+    ROW  = 5.5*mm
 
     risk_factors, positive_factors = [], []
     if glucose >= 126:         risk_factors.append("High Glucose Level (≥126 mg/dL)")
-    elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100-125 mg/dL)")
+    elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
     else:                      positive_factors.append("Normal Glucose Level (<100 mg/dL)")
     if bmi > 30:               risk_factors.append("High BMI (Obesity)")
     elif 18.5 <= bmi <= 24.9:  positive_factors.append("Healthy BMI")
@@ -311,45 +362,56 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
     elif 90 <= bp <= 120:      positive_factors.append("Normal Blood Pressure")
     if dpf > 0.5:              risk_factors.append("Higher Genetic Risk")
 
+    def rf_row(cx, cy, w, text, accent, bg, txt_clr):
+        c.setFillColor(bg);     c.rect(cx, cy-ROW, w, ROW, fill=1, stroke=0)
+        c.setFillColor(accent); c.rect(cx, cy-ROW, 2*mm, ROW, fill=1, stroke=0)
+        avw = w - 5.5*mm; fs = 7.2
+        c.setFont("Helvetica", fs)
+        while c.stringWidth(text,"Helvetica",fs) > avw and fs > 5.5: fs -= 0.2
+        t = text
+        c.setFont("Helvetica", fs)
+        while c.stringWidth(t,"Helvetica",fs) > avw and len(t) > 4: t = t[:-2]+"…"
+        c.setFillColor(txt_clr); c.drawString(cx+4.5*mm, cy-ROW/2-1.5*mm, t)
+        c.setStrokeColor(rl_colors.HexColor("#e2e8f0")); c.setLineWidth(0.25)
+        c.line(cx, cy-ROW, cx+w, cy-ROW)
+
     for item in risk_factors:
-        c.setFillColor(rl_colors.HexColor("#fff1f2"))
-        c.rect(M, y - RFH, CW, RFH, fill=1, stroke=0)
-        c.setFillColor(RED_C); c.rect(M, y - RFH, 2.5 * mm, RFH, fill=1, stroke=0)
-        c.setFillColor(rl_colors.HexColor("#991b1b")); c.setFont("Helvetica-Bold", 8.2)
-        c.drawString(M + 5 * mm, y - 4 * mm, f"  {item}")
-        c.setStrokeColor(GRY_R); c.setLineWidth(0.3)
-        c.line(M, y - RFH, M + CW, y - RFH)
-        y -= RFH + 1 * mm
-
+        rf_row(LX, y_l, LEFT_W, item, RED, RED_BG, rl_colors.HexColor("#7f1d1d"))
+        y_l -= ROW + 0.4*mm
     for item in positive_factors:
-        c.setFillColor(rl_colors.HexColor("#f0fdf4"))
-        c.rect(M, y - RFH, CW, RFH, fill=1, stroke=0)
-        c.setFillColor(GREEN_C); c.rect(M, y - RFH, 2.5 * mm, RFH, fill=1, stroke=0)
-        c.setFillColor(rl_colors.HexColor("#065f46")); c.setFont("Helvetica-Bold", 8.2)
-        c.drawString(M + 5 * mm, y - 4 * mm, f"  {item}")
-        c.setStrokeColor(GRY_R); c.setLineWidth(0.3)
-        c.line(M, y - RFH, M + CW, y - RFH)
-        y -= RFH + 1 * mm
+        rf_row(LX, y_l, LEFT_W, item, GREEN, GREEN_BG, rl_colors.HexColor("#14532d"))
+        y_l -= ROW + 0.4*mm
+    c.setStrokeColor(TEAL); c.setLineWidth(0.8)
+    c.rect(LX, y_l, LEFT_W, y-SH-y_l, fill=0, stroke=1)
 
-    y -= 5 * mm
-
-    y = sec_head(M, y, "Medical Recommendations", CW) - 3 * mm
     for r in recs_for_pdf:
-        c.setFillColor(BLACK); c.setFont("Helvetica", 8.5)
-        c.drawString(M + 5 * mm, y - 4 * mm, f"  \u2022   {r}")
-        y -= 6.5 * mm
+        c.setFillColor(rl_colors.HexColor("#f0f9ff"))
+        c.rect(RX, y_r-ROW, RGHT_W, ROW, fill=1, stroke=0)
+        c.setFillColor(TEAL)
+        c.circle(RX+3*mm, y_r-ROW/2-0.3*mm, 1.3*mm, fill=1, stroke=0)
+        avw = RGHT_W - 7*mm; fs = 7.2
+        t = r; c.setFont("Helvetica", fs)
+        while c.stringWidth(t,"Helvetica",fs) > avw and fs > 5.5: fs -= 0.2
+        c.setFont("Helvetica", fs)
+        while c.stringWidth(t,"Helvetica",fs) > avw and len(t) > 4: t = t[:-2]+"…"
+        c.setFillColor(rl_colors.HexColor("#0c4a6e")); c.drawString(RX+6.5*mm, y_r-ROW/2-1.5*mm, t)
+        c.setStrokeColor(CELL_DIV); c.setLineWidth(0.25)
+        c.line(RX, y_r-ROW, RX+RGHT_W, y_r-ROW)
+        y_r -= ROW + 0.4*mm
+    c.setStrokeColor(TEAL); c.setLineWidth(0.8)
+    c.rect(RX, y_r, RGHT_W, y-SH-y_r, fill=0, stroke=1)
 
-    FH = 13 * mm
-    c.setFillColor(GRY_L); c.rect(0, 0, W, FH, fill=1, stroke=0)
-    c.setStrokeColor(GRY_R); c.setLineWidth(0.5); c.line(0, FH, W, FH)
-    c.setFillColor(GRY_T); c.setFont("Helvetica-Oblique", 7)
-    c.drawString(M, 9 * mm,
-        "MEDICAL DISCLAIMER: This report is AI-generated and does not replace professional medical advice.")
-    c.drawString(M, 5 * mm,
-        "Consult a qualified healthcare professional for clinical diagnosis, interpretation, and treatment.")
-    c.setFont("Helvetica", 7)
-    c.drawRightString(W - M, 7 * mm,
-        f"Diabetes Prediction System  |  {current_time.strftime('%d %B %Y')}  |  Page 1 of 1")
+    # ── FOOTER ───────────────────────────────────────────────
+    FH = 11*mm
+    c.setFillColor(GREY_BG); c.rect(0, 0, W, FH, fill=1, stroke=0)
+    c.setStrokeColor(TEAL); c.setLineWidth(0.6); c.line(0, FH, W, FH)
+    c.setFillColor(SLATE); c.setFont("Helvetica-Oblique", 6)
+    c.drawString(M, 7.5*mm,
+        "Disclaimer: This AI-generated report is for informational purposes only "
+        "and does not constitute professional medical advice.")
+    c.setFont("Helvetica", 6)
+    c.drawString(M, 3.5*mm, "Consult a qualified healthcare professional for diagnosis and treatment.")
+    c.drawRightString(W-M, 5.5*mm, "Diabetes Prediction System  ·  Page 1 of 1")
 
     c.save()
     return buf.getvalue()
@@ -365,8 +427,6 @@ def registration_page():
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html {{ scroll-behavior: smooth; }} /* 11. Smooth Scroll */
-
 /* ── BACKGROUND ── */
 .stApp {{
     background: linear-gradient(rgba(2,6,18,0.72), rgba(2,6,18,0.72)),
@@ -374,15 +434,6 @@ html {{ scroll-behavior: smooth; }} /* 11. Smooth Scroll */
     font-family: 'DM Sans', sans-serif;
 }}
 #MainMenu, footer, header, .stDeployButton {{ display: none !important; }}
-
-/* 1. Page Entry Animation */
-@keyframes fadeSlideUp {{
-    from {{ opacity: 0; transform: translateY(20px); }}
-    to {{ opacity: 1; transform: translateY(0); }}
-}}
-.stApp > header + div {{
-    animation: fadeSlideUp 0.6s ease-out forwards;
-}}
 
 /* ── TITLE ── */
 h1 {{
@@ -450,16 +501,13 @@ div[data-testid="stForm"] div[data-baseweb="select"] > div {{
     border: 1px solid rgba(255, 255, 255, 0.10) !important;
     transition: all 0.25s ease;
 }}
-
-/* 12. Neon Focus Ring */
 div[data-testid="stForm"] div[data-baseweb="input"] > div:focus-within,
 div[data-testid="stForm"] div[data-baseweb="textarea"] > div:focus-within,
 div[data-testid="stForm"] div[data-baseweb="select"] > div:focus-within {{
-    border: 1px solid rgba(103, 232, 249, 0.8) !important;
-    box-shadow: 0 0 12px rgba(103, 232, 249, 0.4), 0 0 0 1px #67e8f9 !important;
+    border: 1px solid rgba(103, 232, 249, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.12) !important;
     background: rgba(255, 255, 255, 0.09) !important;
 }}
-
 div[data-testid="stForm"] input,
 div[data-testid="stForm"] textarea {{
     color: #e2e8f0 !important;
@@ -488,15 +536,11 @@ div[data-testid="stForm"] button {{
     letter-spacing: 0.04em !important;
     border: none !important;
     box-shadow: 0 4px 24px rgba(8,145,178,0.35) !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.25s ease !important;
 }}
-/* 6. Smooth Button Press */
 div[data-testid="stForm"] button:hover {{
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 32px rgba(8,145,178,0.5) !important;
-}}
-div[data-testid="stForm"] button:active {{
-    transform: scale(0.97) !important;
 }}
 
 /* ── DROPDOWN POPUP ── */
@@ -523,7 +567,6 @@ div[data-testid="stError"] {{
 }}
 div[data-testid="stError"] p {{ color: #fca5a5 !important; font-weight: 600; }}
 
-/* 7. Mobile Robustness */
 @media (max-width: 768px) {{
     div[data-testid="stForm"] {{ padding: 24px 18px !important; }}
     h1 {{ font-size: 1.8rem !important; }}
@@ -627,8 +670,6 @@ def prediction_page():
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html {{ scroll-behavior: smooth; }} /* 11. Smooth Scroll */
-
 .stApp {{
     background: linear-gradient(rgba(2,6,18,0.78), rgba(2,6,18,0.78)),
                 url("data:image/png;base64,{img}") center/cover fixed;
@@ -638,32 +679,10 @@ html {{ scroll-behavior: smooth; }} /* 11. Smooth Scroll */
 ::-webkit-scrollbar {{ width: 5px; }}
 ::-webkit-scrollbar-thumb {{ background: rgba(8,145,178,.45); border-radius: 99px; }}
 
-/* 1. Page Entry Animation */
-@keyframes fadeSlideUp {{
-    from {{ opacity: 0; transform: translateY(20px); }}
-    to {{ opacity: 1; transform: translateY(0); }}
-}}
-.stApp > header + div {{
-    animation: fadeSlideUp 0.6s ease-out forwards;
-}}
-
 /* ── GLOBAL HEADINGS ── */
 h1, h2, h3 {{ color: white !important; font-family: 'Syne', sans-serif !important; letter-spacing: -0.02em; }}
 p, li {{ color: #e2e8f0 !important; font-size: clamp(14px, 1.8vw, 18px); }}
 ul {{ line-height: 1.8; }}
-
-/* 9. Sticky Top Header Bar */
-div[data-testid="stMarkdownContainer"] > h1:first-child {{
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(2, 6, 18, 0.9);
-    backdrop-filter: blur(12px);
-    padding: 1rem 0;
-    margin-top: -1rem;
-    border-bottom: 1px solid rgba(8,145,178,0.3);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}}
 
 /* ══════════════════════════════════
    SIDEBAR
@@ -676,12 +695,6 @@ section[data-testid="stSidebar"] {{
     box-shadow: 6px 0 40px rgba(0,0,0,0.5) !important;
 }}
 section[data-testid="stSidebar"] > div {{ padding-top: 10px !important; }}
-
-/* 3. Sidebar Section Separators */
-section[data-testid="stSidebar"] hr {{
-    border-top: 1px dashed rgba(8,145,178,0.4) !important;
-    margin: 1.5rem 0;
-}}
 
 /* Sidebar text */
 section[data-testid="stSidebar"] h1,
@@ -705,23 +718,20 @@ section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {{
     font-size: 13px;
 }}
 
-/* Sidebar inputs */
+/* Sidebar inputs — light so numbers always readable */
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
     background-color: #dde8f5 !important;
     color: black !important;
     border-radius: 10px !important;
     border: 1.5px solid #8ba4c8 !important;
-    transition: all 0.2s;
+    transition: border-color 0.2s;
 }}
-
-/* 12. Neon Focus Ring */
 section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {{
-    border-color: #67e8f9 !important;
-    box-shadow: 0 0 10px rgba(103, 232, 249, 0.8), 0 0 0 1px #67e8f9 !important;
+    border-color: #0891b2 !important;
+    box-shadow: 0 0 0 3px rgba(8,145,178,0.18) !important;
 }}
-
 section[data-testid="stSidebar"] div[data-baseweb="input"] input {{
     color: #0f172a !important;
     -webkit-text-fill-color: #0f172a !important;
@@ -756,36 +766,44 @@ div[data-baseweb="popover"] {{
 ul[role="listbox"] {{ background: #0f172a !important; }}
 li[role="option"] {{ background: transparent !important; color: #94a3b8 !important; font-weight: 600 !important; }}
 li[role="option"]:hover {{ background: rgba(8,145,178,0.12) !important; color: #67e8f9 !important; }}
+section[data-testid="stSidebar"] div[data-baseweb="select"] span {{ color: black !important; font-weight: 600 !important; }}
 
-/* ── BUTTONS ── */
-section[data-testid="stSidebar"] button,
-div.stDownloadButton > button {{
+/* ── SIDEBAR BUTTONS ── */
+section[data-testid="stSidebar"] button {{
     background: linear-gradient(135deg, #0891b2 0%, #1d4ed8 100%) !important;
+    backdrop-filter: none;
     border-radius: 11px !important;
     border: none !important;
     color: white !important;
     font-family: 'DM Sans', sans-serif !important;
     font-weight: 700 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
+    letter-spacing: 0.03em !important;
     box-shadow: 0 4px 16px rgba(8,145,178,0.3) !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.25s ease !important;
 }}
-div.stDownloadButton > button {{
-    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-    padding: 12px 24px !important;
-    width: 100% !important;
-    font-size: 15px !important;
-}}
-section[data-testid="stSidebar"] button:hover,
-div.stDownloadButton > button:hover {{
+section[data-testid="stSidebar"] button:hover {{
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 24px rgba(8,145,178,0.45) !important;
 }}
 
-/* 6. Smooth Button Press */
-section[data-testid="stSidebar"] button:active,
-div.stDownloadButton > button:active {{
-    transform: scale(0.96) !important;
+/* ── DOWNLOAD BUTTON ── */
+div.stDownloadButton > button {{
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    color: white !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    padding: 12px 24px !important;
+    border: none !important;
+    box-shadow: 0 4px 18px rgba(5,150,105,0.35) !important;
+    transition: all 0.25s ease !important;
+    width: 100% !important;
+    font-size: 15px !important;
+}}
+div.stDownloadButton > button:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 28px rgba(5,150,105,0.5) !important;
 }}
 
 /* ── METRIC CARDS ── */
@@ -795,16 +813,10 @@ div[data-testid="metric-container"] {{
     border-radius: 14px !important;
     padding: 16px !important;
 }}
-/* 4. Animate Metric Numbers */
-@keyframes countUp {{
-    from {{ opacity: 0; transform: scale(0.8); }}
-    to {{ opacity: 1; transform: scale(1); }}
-}}
 div[data-testid="metric-container"] [data-testid="stMetricValue"] {{
     font-family: 'Syne', sans-serif !important;
     font-size: 2rem !important;
     color: #67e8f9 !important;
-    animation: countUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }}
 div[data-testid="metric-container"] [data-testid="stMetricLabel"] {{
     font-family: 'JetBrains Mono', monospace !important;
@@ -815,25 +827,29 @@ div[data-testid="metric-container"] [data-testid="stMetricLabel"] {{
 }}
 
 /* ── ALERT BOXES ── */
-div[data-testid="stSuccess"], div[data-testid="stWarning"], div[data-testid="stError"] {{
+div[data-testid="stSuccess"] {{
+    background: rgba(4,120,87,0.10) !important;
+    border: 1px solid rgba(4,120,87,0.38) !important;
     border-radius: 12px !important;
-    animation: fadeSlideUp 0.5s ease-out;
 }}
-div[data-testid="stSuccess"] {{ background: rgba(4,120,87,0.10) !important; border: 1px solid rgba(4,120,87,0.38) !important; }}
 div[data-testid="stSuccess"] p {{ color: #6ee7b7 !important; font-weight: 600; }}
-div[data-testid="stWarning"] {{ background: rgba(180,83,9,0.10) !important; border: 1px solid rgba(180,83,9,0.38) !important; }}
+div[data-testid="stWarning"] {{
+    background: rgba(180,83,9,0.10) !important;
+    border: 1px solid rgba(180,83,9,0.38) !important;
+    border-radius: 12px !important;
+}}
 div[data-testid="stWarning"] p {{ color: #fcd34d !important; font-weight: 600; }}
-div[data-testid="stError"] {{ background: rgba(185,28,28,0.10) !important; border: 1px solid rgba(185,28,28,0.38) !important; }}
+div[data-testid="stError"] {{
+    background: rgba(185,28,28,0.10) !important;
+    border: 1px solid rgba(185,28,28,0.38) !important;
+    border-radius: 12px !important;
+}}
 div[data-testid="stError"] p {{ color: #fca5a5 !important; font-weight: 600; }}
 
-/* ── HR divider (14. Spacing Consistency) ── */
-hr {{ 
-    border-color: rgba(8,145,178,0.18) !important; 
-    margin: 2.5rem 0 !important;
-}}
-.section-gap {{ margin-top: 2rem; margin-bottom: 2rem; }}
+/* ── HR divider ── */
+hr {{ border-color: rgba(8,145,178,0.18) !important; }}
 
-/* 2. & 13. GLASS BOX (Hover Elevation) */
+/* ── GLASS BOX ── */
 .glass-box {{
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(20px);
@@ -843,76 +859,10 @@ hr {{
     border: 1px solid rgba(255,255,255,0.10);
     box-shadow: 0 8px 32px rgba(0,0,0,0.35);
     margin-bottom: 32px;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}}
-.glass-box:hover {{
-    transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(8,145,178,0.25);
-    border: 1px solid rgba(103, 232, 249, 0.3);
 }}
 
-/* 5. Gradient Border Accent */
-.gradient-result {{
-    position: relative;
-    background: rgba(15, 23, 42, 0.8);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    margin-bottom: 24px;
-}}
-.gradient-result::before {{
-    content: "";
-    position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    background: linear-gradient(135deg, #0891b2, #3b82f6, #8b5cf6);
-    border-radius: 18px;
-    z-index: -1;
-    animation: gradientBorder 3s ease infinite;
-    background-size: 200% 200%;
-}}
-@keyframes gradientBorder {{
-    0% {{ background-position: 0% 50%; }}
-    50% {{ background-position: 100% 50%; }}
-    100% {{ background-position: 0% 50%; }}
-}}
-
-/* 8. Subtle Glow Behind Gauge Chart */
-.gauge-glow {{
-    position: relative;
-}}
-.gauge-glow::after {{
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(103, 232, 249, 0.2) 0%, transparent 65%);
-    z-index: -1;
-    border-radius: 50%;
-}}
-
-/* 10. Soft Loading Spinner Styling */
-.stSpinner > div > div {{
-    border-top-color: #67e8f9 !important;
-    border-right-color: #0891b2 !important;
-    animation: spin 0.8s linear infinite;
-}}
-
-/* 15. Make Charts Slightly Interactive on Hover */
-div[data-testid="stPlotlyChart"] {{
-    transition: transform 0.3s ease, filter 0.3s ease;
-}}
-div[data-testid="stPlotlyChart"]:hover {{
-    transform: scale(1.02);
-    filter: drop-shadow(0 10px 20px rgba(8,145,178,0.15));
-    z-index: 10;
-}}
-
-/* 7. Mobile Layout Robustness */
 @media (max-width: 992px) {{
     section[data-testid="stSidebar"] {{ width: 100% !important; }}
-    .glass-box, .gradient-result {{ padding: 20px; }}
-    div[data-testid="metric-container"] [data-testid="stMetricValue"] {{ font-size: 1.6rem !important; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -962,246 +912,235 @@ div[data-testid="stPlotlyChart"]:hover {{
         st.success("✅ Registration Successful!")
         st.session_state.show_success = False
 
-    # 13. Glass Card for About Section
     st.markdown("""
-    <div class="glass-box section-gap">
-        <h3 style="margin-top:0;">📋 About This System</h3>
-        <p>This Diabetes Prediction System is an AI-powered medical risk assessment tool designed to estimate the likelihood of diabetes based on key health parameters such as glucose level, BMI, blood pressure, age, and family history.</p>
-    </div>
-    """, unsafe_allow_html=True)
+### 📋 About This System
+This Diabetes Prediction System is an AI-powered medical risk assessment tool designed to estimate the likelihood of diabetes based on key health parameters such as glucose level, BMI, blood pressure, age, and family history.
+""")
 
     # ── PREDICTION LOGIC ─────────────────────────────────────
     if predict_btn:
-        # 10. Soft Loading Spinner Simulation
-        with st.spinner("Analyzing risk factors..."):
-            time.sleep(0.8) # Premium feel processing delay
-            
-            if "_id" in info:
-                users_collection.update_one({"_id": info["_id"]}, {"$set": {"gender": gender}})
+        if "_id" in info:
+            users_collection.update_one({"_id": info["_id"]}, {"$set": {"gender": gender}})
 
-            input_data = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
-            input_std  = scaler.transform(input_data)
-            prediction = model.predict(input_std)[0]
-            probability = model.predict_proba(input_std)[0]
+        input_data = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
+        input_std  = scaler.transform(input_data)
+        prediction = model.predict(input_std)[0]
+        probability = model.predict_proba(input_std)[0]
 
-            prob_negative = probability[0] * 100
-            prob_positive = probability[1] * 100
+        prob_negative = probability[0] * 100
+        prob_positive = probability[1] * 100
 
-            if prob_positive < 30:   risk_label = "Low Risk"
-            elif prob_positive < 70: risk_label = "Moderate Risk"
-            else:                    risk_label = "High Risk"
+        if prob_positive < 30:   risk_label = "Low Risk"
+        elif prob_positive < 70: risk_label = "Moderate Risk"
+        else:                    risk_label = "High Risk"
 
-            ist = pytz.timezone('Asia/Kolkata')
-            current_time = datetime.now(ist)
-            prediction_data = {
-                "patient_id":   info["_id"],
-                "patient_name": info["name"],
-                "age":          age,
-                "gender":       gender,
-                "glucose":      glucose,
-                "blood_pressure": bp,
-                "bmi":          bmi,
-                "prediction":   risk_label,
-                "probability":  round(prob_positive, 2),
-                "created_at":   current_time.strftime("%d-%m-%Y %H:%M:%S")
-            }
-            predictions_collection.insert_one(prediction_data)
+        ist = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(ist)
+        prediction_data = {
+            "patient_id":   info["_id"],
+            "patient_name": info["name"],
+            "age":          age,
+            "gender":       gender,
+            "glucose":      glucose,
+            "blood_pressure": bp,
+            "bmi":          bmi,
+            "prediction":   risk_label,
+            "probability":  round(prob_positive, 2),
+            "created_at":   current_time.strftime("%d-%m-%Y %H:%M:%S")
+        }
+        predictions_collection.insert_one(prediction_data)
 
-            # ── UI RESULTS ───────────────────────────────────────
-            st.markdown("---")
-            st.header("Prediction Results")
-            
-            # 5. Wrap results in gradient border
-            st.markdown('<div class="gradient-result">', unsafe_allow_html=True)
-            col1, col2 = st.columns([2, 1])
+        # ── UI RESULTS ───────────────────────────────────────
+        st.markdown("---")
+        st.header("Prediction Results")
+        col1, col2 = st.columns([2, 1])
 
-            with col1:
-                if prob_positive < 30:
-                    st.success("✅ LOW RISK - Diabetes Unlikely")
-                elif prob_positive < 70:
-                    st.warning("⚠️ MODERATE RISK - Possible Diabetes")
-                else:
-                    st.error("❌ HIGH RISK - Diabetes Likely")
-
-                st.subheader("Probability Breakdown")
-                c1, c2 = st.columns(2)
-                c1.metric("Non-Diabetic", f"{prob_negative:.1f}%")
-                c2.metric("Diabetic",     f"{prob_positive:.1f}%")
-
-            with col2:
-                # 8. Subtle Glow wrapper around gauge
-                st.markdown('<div class="gauge-glow">', unsafe_allow_html=True)
-                
-                gauge_color = "#22c55e" if prob_positive < 30 else \
-                              "#f59e0b" if prob_positive < 70 else "#ef4444"
-                fig = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=prob_positive,
-                    number={"suffix": "%", "font": {"color": "white", "size": 28,
-                                                     "family": "DM Sans"}},
-                    title={"text": "Risk Level", "font": {"color": "#94a3b8", "size": 13}},
-                    gauge={
-                        "axis": {"range": [0, 100],
-                                 "tickcolor": "rgba(255,255,255,0.2)", "tickwidth": 1},
-                        "bar":  {"color": gauge_color, "thickness": 0.22},
-                        "bgcolor": "rgba(0,0,0,0)", "borderwidth": 0,
-                        "steps": [
-                            {"range": [0,  30], "color": "rgba(34,197,94,0.14)"},
-                            {"range": [30, 70], "color": "rgba(245,158,11,0.14)"},
-                            {"range": [70,100], "color": "rgba(239,68,68,0.14)"},
-                        ],
-                        "threshold": {"line": {"color": gauge_color, "width": 3},
-                                      "thickness": 0.8, "value": prob_positive},
-                    }
-                ))
-                fig.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="white"),
-                    height=250,
-                    margin=dict(l=16, r=16, t=24, b=8),
-                )
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True) # End gradient border div
-
-            # ── RISK FACTOR ANALYSIS ─────────────────────────────
-            st.markdown("---")
-            st.subheader("Risk Factor Analysis")
-            risk_factors, positive_factors = [], []
-
-            if glucose >= 126:         risk_factors.append("High Glucose Level (≥126 mg/dL)")
-            elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
-            else:                      positive_factors.append("Normal Glucose Level (<100 mg/dL)")
-
-            if bmi > 30:               risk_factors.append("High BMI (Obesity)")
-            elif 18.5 <= bmi <= 24.9:  positive_factors.append("Healthy BMI")
-
-            if age > 45:               risk_factors.append("Age above 45")
-
-            if bp > 120:               risk_factors.append("High Blood Pressure (>120 mmHg)")
-            elif 90 <= bp <= 120:      positive_factors.append("Normal Blood Pressure")
-
-            if dpf > 0.5:              risk_factors.append("Higher Genetic Risk")
-
-            if risk_factors:
-                st.warning("Identified Risk Factors:")
-                for factor in risk_factors:
-                    st.markdown(f"- {factor}")
-
-            if positive_factors:
-                st.success("Positive Health Indicators:")
-                for factor in positive_factors:
-                    st.markdown(f"- {factor}")
-
-            # ── RECOMMENDATIONS ──────────────────────────────────
-            st.markdown("---")
-            st.subheader("Recommendations")
-            if prob_positive >= 70:
-                st.error("- Consult a healthcare professional immediately\n"
-                         "- Get complete diabetes screening\n"
-                         "- Monitor blood sugar regularly\n"
-                         "- Improve diet and physical activity")
-                recs_for_pdf = [
-                    "Consult a healthcare professional immediately",
-                    "Get complete diabetes screening",
-                    "Monitor blood sugar regularly",
-                    "Improve diet and physical activity",
-                ]
-            elif prob_positive >= 30:
-                st.warning("- Maintain healthy diet\n"
-                           "- Increase physical activity\n"
-                           "- Monitor glucose periodically")
-                recs_for_pdf = [
-                    "Maintain healthy diet",
-                    "Increase physical activity",
-                    "Monitor glucose periodically",
-                ]
+        with col1:
+            if prob_positive < 30:
+                st.success("✅ LOW RISK - Diabetes Unlikely")
+            elif prob_positive < 70:
+                st.warning("⚠️ MODERATE RISK - Possible Diabetes")
             else:
-                st.success("- Continue healthy lifestyle\n"
-                           "- Exercise regularly\n"
-                           "- Routine health check-ups")
-                recs_for_pdf = [
-                    "Continue healthy lifestyle",
-                    "Exercise regularly",
-                    "Routine health check-ups",
-                ]
+                st.error("❌ HIGH RISK - Diabetes Likely")
 
-            # ── CHARTS (UI) ──────────────────────────────────────
-            st.markdown('<div class="glass-box section-gap">', unsafe_allow_html=True)
-            st.subheader("📊 Causes of Diabetes (Risk Contribution Analysis)")
+            st.subheader("Probability Breakdown")
+            c1, c2 = st.columns(2)
+            c1.metric("Non-Diabetic", f"{prob_negative:.1f}%")
+            c2.metric("Diabetic",     f"{prob_positive:.1f}%")
 
-            c_col1, c_col2 = st.columns([1, 1])
-            cause_labels, cause_values = [], []
-
-            if glucose >= 126: cause_labels.append("High Glucose");        cause_values.append(min(glucose / 2, 100))
-            if bmi > 30:       cause_labels.append("High BMI (Obesity)");  cause_values.append(min(bmi * 2, 100))
-            if age > 45:       cause_labels.append("Age Factor");          cause_values.append(min(age, 100))
-            if bp > 120:       cause_labels.append("High Blood Pressure");  cause_values.append(min(bp, 100))
-            if dpf > 0.5:      cause_labels.append("Genetic Risk (DPF)");  cause_values.append(min(dpf * 100, 100))
-            if not cause_labels:
-                cause_labels = ["Healthy Indicators"]
-                cause_values = [100]
-
-            scr_colors = ["#dc2626","#d97706","#2563eb","#7c3aed","#047857"]
-            bar_col = [scr_colors[i % len(scr_colors)] for i in range(len(cause_labels))]
-            
-            bar_fig = go.Figure(go.Bar(
-                x=cause_labels, y=cause_values,
-                text=[f"{v:.1f}" for v in cause_values], textposition="auto",
-                marker=dict(color=bar_col, line=dict(color="rgba(255,255,255,0.15)", width=1.5)),
-                textfont=dict(color="white", size=14, family="DM Sans"),
+        with col2:
+            # Determine gauge colour
+            gauge_color = "#22c55e" if prob_positive < 30 else \
+                          "#f59e0b" if prob_positive < 70 else "#ef4444"
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=prob_positive,
+                number={"suffix": "%", "font": {"color": "white", "size": 28,
+                                                 "family": "DM Sans"}},
+                title={"text": "Risk Level", "font": {"color": "#94a3b8", "size": 13}},
+                gauge={
+                    "axis": {"range": [0, 100],
+                             "tickcolor": "rgba(255,255,255,0.2)", "tickwidth": 1},
+                    "bar":  {"color": gauge_color, "thickness": 0.22},
+                    "bgcolor": "rgba(0,0,0,0)", "borderwidth": 0,
+                    "steps": [
+                        {"range": [0,  30], "color": "rgba(34,197,94,0.14)"},
+                        {"range": [30, 70], "color": "rgba(245,158,11,0.14)"},
+                        {"range": [70,100], "color": "rgba(239,68,68,0.14)"},
+                    ],
+                    "threshold": {"line": {"color": gauge_color, "width": 3},
+                                  "thickness": 0.8, "value": prob_positive},
+                }
             ))
-            bar_fig.update_layout(
-                title="Risk Factor Severity",
-                xaxis_title="Causes", yaxis_title="Severity Level",
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#94a3b8", family="DM Sans"),
-                autosize=True, margin=dict(l=20, r=20, t=50, b=20),
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="white"),
+                height=250,
+                margin=dict(l=16, r=16, t=24, b=8),
             )
-            bar_fig.update_xaxes(tickfont=dict(color="#94a3b8", size=13),
-                                 title_font=dict(color="#94a3b8", size=14),
-                                 showline=True, linecolor="rgba(255,255,255,0.12)")
-            bar_fig.update_yaxes(tickfont=dict(color="#94a3b8", size=13),
-                                 title_font=dict(color="#94a3b8", size=14),
-                                 showgrid=True, gridcolor="rgba(255,255,255,0.07)",
-                                 zerolinecolor="rgba(255,255,255,0.12)")
-            with c_col1:
-                st.plotly_chart(bar_fig, use_container_width=True, config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True)
 
-            pie_fig = go.Figure(data=[go.Pie(
-                labels=cause_labels, values=cause_values, hole=0.45,
-                marker=dict(colors=bar_col, line=dict(color="rgba(0,0,0,0.35)", width=2)),
-                textfont=dict(color="white", size=12, family="DM Sans"),
-            )])
-            pie_fig.update_layout(
-                title="Percentage Contribution",
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#94a3b8", family="DM Sans"),
-                autosize=True, margin=dict(l=20, r=20, t=50, b=20),
-            )
-            with c_col2:
-                st.plotly_chart(pie_fig, use_container_width=True, config={"responsive": True})
-            st.markdown("</div>", unsafe_allow_html=True)
+        # ── RISK FACTOR ANALYSIS ─────────────────────────────
+        st.markdown("---")
+        st.subheader("Risk Factor Analysis")
+        risk_factors, positive_factors = [], []
 
-            # ── PDF GENERATION ───────────────────────────────────
-            pdf_bytes = build_hospital_pdf(
-                info=info, age=age, gender=gender, glucose=glucose, bp=bp,
-                skin=skin, insulin=insulin, bmi=bmi, dpf=dpf,
-                pregnancies=pregnancies, prob_positive=prob_positive,
-                risk_label=risk_label, current_time=current_time,
-                cause_labels=cause_labels, cause_values=cause_values,
-                recs_for_pdf=recs_for_pdf,
-            )
+        if glucose >= 126:         risk_factors.append("High Glucose Level (≥126 mg/dL)")
+        elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
+        else:                      positive_factors.append("Normal Glucose Level (<100 mg/dL)")
 
-            st.download_button(
-                label="📄 Download Professional Medical Report (PDF)",
-                data=pdf_bytes,
-                file_name=f"Diabetes_Report_{info.get('name', 'Patient')}.pdf",
-                mime="application/pdf",
-            )
+        if bmi > 30:               risk_factors.append("High BMI (Obesity)")
+        elif 18.5 <= bmi <= 24.9:  positive_factors.append("Healthy BMI")
 
-            st.markdown("---")
-            st.warning("⚠️ Medical Disclaimer:\nThis tool does NOT replace professional medical advice.")
+        if age > 45:               risk_factors.append("Age above 45")
+
+        if bp > 120:               risk_factors.append("High Blood Pressure (>120 mmHg)")
+        elif 90 <= bp <= 120:      positive_factors.append("Normal Blood Pressure")
+
+        if dpf > 0.5:              risk_factors.append("Higher Genetic Risk")
+
+        if risk_factors:
+            st.warning("Identified Risk Factors:")
+            for factor in risk_factors:
+                st.markdown(f"- {factor}")
+
+        if positive_factors:
+            st.success("Positive Health Indicators:")
+            for factor in positive_factors:
+                st.markdown(f"- {factor}")
+
+        # ── RECOMMENDATIONS ──────────────────────────────────
+        st.markdown("---")
+        st.subheader("Recommendations")
+        if prob_positive >= 70:
+            st.error("- Consult a healthcare professional immediately\n"
+                     "- Get complete diabetes screening\n"
+                     "- Monitor blood sugar regularly\n"
+                     "- Improve diet and physical activity")
+            recs_for_pdf = [
+                "Consult a healthcare professional immediately",
+                "Get complete diabetes screening",
+                "Monitor blood sugar regularly",
+                "Improve diet and physical activity",
+            ]
+        elif prob_positive >= 30:
+            st.warning("- Maintain healthy diet\n"
+                       "- Increase physical activity\n"
+                       "- Monitor glucose periodically")
+            recs_for_pdf = [
+                "Maintain healthy diet",
+                "Increase physical activity",
+                "Monitor glucose periodically",
+            ]
+        else:
+            st.success("- Continue healthy lifestyle\n"
+                       "- Exercise regularly\n"
+                       "- Routine health check-ups")
+            recs_for_pdf = [
+                "Continue healthy lifestyle",
+                "Exercise regularly",
+                "Routine health check-ups",
+            ]
+
+        # ── CHARTS (UI) ──────────────────────────────────────
+        st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+        st.markdown("---")
+        st.subheader("📊 Causes of Diabetes (Risk Contribution Analysis)")
+
+        c_col1, c_col2 = st.columns([1, 1])
+        cause_labels, cause_values = [], []
+
+        if glucose >= 126: cause_labels.append("High Glucose");        cause_values.append(min(glucose / 2, 100))
+        if bmi > 30:       cause_labels.append("High BMI (Obesity)");  cause_values.append(min(bmi * 2, 100))
+        if age > 45:       cause_labels.append("Age Factor");          cause_values.append(min(age, 100))
+        if bp > 120:       cause_labels.append("High Blood Pressure");  cause_values.append(min(bp, 100))
+        if dpf > 0.5:      cause_labels.append("Genetic Risk (DPF)");  cause_values.append(min(dpf * 100, 100))
+        if not cause_labels:
+            cause_labels = ["Healthy Indicators"]
+            cause_values = [100]
+
+        # Plotly bar (dark on-screen)
+        scr_colors = ["#dc2626","#d97706","#2563eb","#7c3aed","#047857"]
+        bar_col = [scr_colors[i % len(scr_colors)] for i in range(len(cause_labels))]
+        bar_fig = go.Figure(go.Bar(
+            x=cause_labels, y=cause_values,
+            text=[f"{v:.1f}" for v in cause_values], textposition="auto",
+            marker=dict(color=bar_col, line=dict(color="rgba(255,255,255,0.15)", width=1.5)),
+            textfont=dict(color="white", size=14, family="DM Sans"),
+        ))
+        bar_fig.update_layout(
+            title="Risk Factor Severity",
+            xaxis_title="Causes", yaxis_title="Severity Level",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#94a3b8", family="DM Sans"),
+            autosize=True, margin=dict(l=20, r=20, t=50, b=20),
+        )
+        bar_fig.update_xaxes(tickfont=dict(color="#94a3b8", size=13),
+                             title_font=dict(color="#94a3b8", size=14),
+                             showline=True, linecolor="rgba(255,255,255,0.12)")
+        bar_fig.update_yaxes(tickfont=dict(color="#94a3b8", size=13),
+                             title_font=dict(color="#94a3b8", size=14),
+                             showgrid=True, gridcolor="rgba(255,255,255,0.07)",
+                             zerolinecolor="rgba(255,255,255,0.12)")
+        with c_col1:
+            st.plotly_chart(bar_fig, use_container_width=True, config={"responsive": True})
+
+        # Plotly pie (dark on-screen)
+        pie_fig = go.Figure(data=[go.Pie(
+            labels=cause_labels, values=cause_values, hole=0.45,
+            marker=dict(colors=bar_col, line=dict(color="rgba(0,0,0,0.35)", width=2)),
+            textfont=dict(color="white", size=12, family="DM Sans"),
+        )])
+        pie_fig.update_layout(
+            title="Percentage Contribution",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#94a3b8", family="DM Sans"),
+            autosize=True, margin=dict(l=20, r=20, t=50, b=20),
+        )
+        with c_col2:
+            st.plotly_chart(pie_fig, use_container_width=True, config={"responsive": True})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # ── PDF GENERATION ───────────────────────────────────
+        pdf_bytes = build_hospital_pdf(
+            info=info, age=age, gender=gender, glucose=glucose, bp=bp,
+            skin=skin, insulin=insulin, bmi=bmi, dpf=dpf,
+            pregnancies=pregnancies, prob_positive=prob_positive,
+            risk_label=risk_label, current_time=current_time,
+            cause_labels=cause_labels, cause_values=cause_values,
+            recs_for_pdf=recs_for_pdf,
+        )
+
+        st.download_button(
+            label="📄 Download Professional Medical Report (PDF)",
+            data=pdf_bytes,
+            file_name=f"Diabetes_Report_{info.get('name', 'Patient')}.pdf",
+            mime="application/pdf",
+        )
+
+        # Disclaimer UI
+        st.markdown("---")
+        st.warning("⚠️ Medical Disclaimer:\nThis tool does NOT replace professional medical advice.")
 
 
 # =====================================================
@@ -1211,3 +1150,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+    
