@@ -127,233 +127,210 @@ def _make_pie_buf(labels, values):
 def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
                         pregnancies, prob_positive, risk_label, current_time,
                         cause_labels, cause_values, recs_for_pdf):
-    """Canvas-based A4 hospital report — 1 page, uniform cell colour, auto-fit text."""
-    import math
+    """Canvas-based A4 hospital report — clean, aligned, professional."""
     W, H = A4
-    M  = 13 * mm
-    CW = W - 2 * M
+    M  = 17 * mm     # left/right margin
+    CW = W - 2 * M   # content width
 
-    # ── Palette ──────────────────────────────────────────────
-    NAVY     = rl_colors.HexColor("#0b1f3a")
-    TEAL     = rl_colors.HexColor("#0e7490")
-    TEAL_DIM = rl_colors.HexColor("#0c6782")
-    CELL_BG  = rl_colors.HexColor("#f0f9ff")   # ONE uniform colour — every cell
-    CELL_DIV = rl_colors.HexColor("#bae6fd")
-    LBL_C    = rl_colors.HexColor("#64748b")
-    VAL_C    = rl_colors.HexColor("#0f172a")
-    WHITE    = rl_colors.white
-    SLATE    = rl_colors.HexColor("#334155")
-    GREY_BG  = rl_colors.HexColor("#f8fafc")
-    ICE      = rl_colors.HexColor("#e0f2fe")
-    GREEN    = rl_colors.HexColor("#047857")
-    GREEN_BG = rl_colors.HexColor("#f0fdf4")
-    AMBER    = rl_colors.HexColor("#b45309")
-    AMBER_BG = rl_colors.HexColor("#fffbeb")
-    RED      = rl_colors.HexColor("#b91c1c")
-    RED_BG   = rl_colors.HexColor("#fff5f5")
+    # ── PDF colour palette ───────────────────────────────────
+    NAVY    = rl_colors.HexColor("#0a1f3d")
+    TEAL    = rl_colors.HexColor("#006e8c")
+    WHITE   = rl_colors.white
+    BLACK   = rl_colors.HexColor("#0f172a")
+    GRY_T   = rl_colors.HexColor("#475569")
+    GRY_L   = rl_colors.HexColor("#f1f5f9")
+    GRY_R   = rl_colors.HexColor("#cbd5e1")
+    ROW_ALT = rl_colors.HexColor("#eef4f8")
+    GREEN_C = rl_colors.HexColor("#047857")
+    GREEN_B = rl_colors.HexColor("#ecfdf5")
+    AMBR_C  = rl_colors.HexColor("#d97706")
+    AMBR_B  = rl_colors.HexColor("#fffbeb")
+    RED_C   = rl_colors.HexColor("#b91c1c")
+    RED_B   = rl_colors.HexColor("#fef2f2")
 
     buf = BytesIO()
     c   = rl_canvas.Canvas(buf, pagesize=A4)
 
-    # ── HEADER ───────────────────────────────────────────────
-    BH = 20 * mm
-    c.setFillColor(NAVY); c.rect(0, H-BH, W, BH, fill=1, stroke=0)
-    c.setFillColor(TEAL); c.rect(0, H-2*mm, W, 2*mm, fill=1, stroke=0)  # top stripe
+    # ── HEADER BAND ─────────────────────────────────────────
+    BH = 28 * mm
+    c.setFillColor(NAVY)
+    c.rect(0, H - BH, W, BH, fill=1, stroke=0)
 
+    # Left: clinic name + subtitle
     c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 13.5)
-    c.drawString(M, H-8*mm, "Diabetes Prediction System")
-    c.setFillColor(rl_colors.HexColor("#7dd3fc")); c.setFont("Helvetica", 7)
-    c.drawString(M, H-14*mm, "Clinical AI Risk Assessment  ·  Confidential")
+    c.drawString(M, H - 10 * mm, "Diabetes Prediction System")
+    c.setFillColor(rl_colors.HexColor("#93c5fd")); c.setFont("Helvetica", 7.5)
+    c.drawString(M, H - 16.5 * mm,
+                 "AI-Powered Clinical Risk Assessment  ·  SVM Architecture")
 
-    pid_display = info.get("_id", "N/A").replace("-", "")
-    c.setFillColor(rl_colors.HexColor("#7dd3fc")); c.setFont("Helvetica", 7)
-    c.drawRightString(W-M, H-8*mm,  f"ID  {pid_display}")
-    c.drawRightString(W-M, H-14*mm, current_time.strftime("%d %B %Y"))
+    # Right: report meta  (patient ID shown WITHOUT hyphen)
+    pid_display = info.get('_id', 'N/A').replace('-', '')
+    c.setFillColor(rl_colors.HexColor("#93c5fd")); c.setFont("Helvetica", 7.5)
+    c.drawRightString(W - M, H - 9 * mm,  f"Report ID: {pid_display}")
+    c.drawRightString(W - M, H - 15 * mm,
+                      f"Generated: {current_time.strftime('%d %B %Y | %I:%M %p (IST)')}")
+    c.drawRightString(W - M, H - 21 * mm, "CONFIDENTIAL MEDICAL DOCUMENT")
 
-    y = H - BH - 5*mm
+    y = H - BH - 8 * mm
 
-    # ── TITLE ────────────────────────────────────────────────
-    c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 13)
-    c.drawCentredString(W/2, y, "DIABETES RISK ASSESSMENT REPORT")
-    y -= 2*mm
-    c.setStrokeColor(TEAL);    c.setLineWidth(2);   c.line(M, y, W-M, y)
-    y -= 1*mm
-    c.setStrokeColor(CELL_DIV); c.setLineWidth(0.5); c.line(M, y, W-M, y)
-    y -= 4.5*mm
+    # ── PAGE TITLE ───────────────────────────────────────────
+    c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(W / 2, y, "DIABETES RISK PREDICTION REPORT")
+    y -= 3.5 * mm
+    c.setStrokeColor(TEAL); c.setLineWidth(2)
+    c.line(M, y, W - M, y)
+    y -= 8 * mm
 
     # ── HELPERS ──────────────────────────────────────────────
-    SH = 6*mm
+    def sec_head(cx, cy, label, w):
+        """Teal section heading bar; returns y after bar."""
+        c.setFillColor(TEAL)
+        c.rect(cx, cy - 6 * mm, w, 6 * mm, fill=1, stroke=0)
+        c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 8.5)
+        c.drawString(cx + 3 * mm, cy - 4 * mm, label.upper())
+        return cy - 6 * mm
 
-    def section(cy, label):
-        c.setFillColor(ICE); c.rect(M, cy-SH, CW, SH, fill=1, stroke=0)
-        c.setFillColor(TEAL); c.rect(M, cy-SH, 2.5*mm, SH, fill=1, stroke=0)
-        c.setFillColor(NAVY); c.setFont("Helvetica-Bold", 7.8)
-        c.drawString(M+4.5*mm, cy-3.9*mm, label.upper())
-        return cy - SH
+    CELL_H = 14 * mm   # height of each grid cell (label + value)
 
-    def smart_fit(text, avail_w, max_fs=8.0, min_fs=5.5):
-        """Shrink font to fit. If still too wide at min_fs, word-wrap to 2 lines."""
-        v = str(text)
-        fs = max_fs
-        c.setFont("Helvetica-Bold", fs)
-        while c.stringWidth(v, "Helvetica-Bold", fs) > avail_w and fs > min_fs:
-            fs -= 0.2
-        if c.stringWidth(v, "Helvetica-Bold", fs) <= avail_w:
-            return [v], fs
-        # Word-wrap: find split that balances both halves inside avail_w
-        words = v.split()
-        best_split, best_diff = 1, float("inf")
-        for i in range(1, len(words)):
-            l1 = " ".join(words[:i]); l2 = " ".join(words[i:])
-            d  = (abs(c.stringWidth(l1,"Helvetica-Bold",min_fs) -
-                      c.stringWidth(l2,"Helvetica-Bold",min_fs))
-                  + max(0, c.stringWidth(l1,"Helvetica-Bold",min_fs)-avail_w)*3
-                  + max(0, c.stringWidth(l2,"Helvetica-Bold",min_fs)-avail_w)*3)
-            if d < best_diff:
-                best_diff = d; best_split = i
-        l1 = " ".join(words[:best_split]); l2 = " ".join(words[best_split:])
-        c.setFont("Helvetica-Bold", min_fs)
-        # Hard-truncate each line if needed
-        while c.stringWidth(l1,"Helvetica-Bold",min_fs)>avail_w and len(l1)>3: l1=l1[:-2]+"…"
-        while c.stringWidth(l2,"Helvetica-Bold",min_fs)>avail_w and len(l2)>3: l2=l2[:-2]+"…"
-        return [l1, l2], min_fs
+    def grid_cell(cx, cy, label, value, cw, shade, last_col=False, last_row=False):
+        """Draw one label-over-value cell inside a grid table."""
+        # background
+        c.setFillColor(ROW_ALT if shade else WHITE)
+        c.rect(cx, cy - CELL_H, cw, CELL_H, fill=1, stroke=0)
+        # right border (vertical divider) — skip for last column
+        c.setStrokeColor(GRY_R); c.setLineWidth(0.4)
+        if not last_col:
+            c.line(cx + cw, cy - CELL_H, cx + cw, cy)
+        # bottom border
+        c.line(cx, cy - CELL_H, cx + cw, cy - CELL_H)
+        # label (small caps, muted)
+        c.setFillColor(GRY_T); c.setFont("Helvetica-Bold", 7)
+        c.drawString(cx + 2.5 * mm, cy - 5 * mm, str(label).upper())
+        # value (larger, dark)
+        c.setFillColor(BLACK); c.setFont("Helvetica-Bold", 8.5)
+        v = str(value)
+        # truncate if too wide
+        max_w = cw - 5 * mm
+        while c.stringWidth(v, "Helvetica-Bold", 8.5) > max_w and len(v) > 4:
+            v = v[:-3] + ".."
+        c.drawString(cx + 2.5 * mm, cy - 11 * mm, v)
 
-    CELL_H = 12.5*mm
+    def outer_border(cx, cy, w, h):
+        """Draw outer border rect around a grid block."""
+        c.setStrokeColor(TEAL); c.setLineWidth(0.8)
+        c.rect(cx, cy - h, w, h, fill=0, stroke=1)
 
-    def draw_grid(cy, fields, ncols):
-        cw    = CW / ncols
-        nrows = math.ceil(len(fields) / ncols)
-        pad   = 2.5*mm
-        avail = cw - pad - 2*mm
-
-        for idx, (lbl, raw) in enumerate(fields):
-            row  = idx // ncols
-            col  = idx %  ncols
-            cx   = M + col * cw
-            top  = cy - row * CELL_H
-            bot  = top - CELL_H
-
-            # Uniform background — identical for every cell
-            c.setFillColor(CELL_BG)
-            c.rect(cx, bot, cw, CELL_H, fill=1, stroke=0)
-
-            # Internal dividers
-            c.setStrokeColor(CELL_DIV); c.setLineWidth(0.4)
-            if col < ncols - 1:
-                c.line(cx+cw, bot, cx+cw, top)  # vertical
-            c.line(cx, bot, cx+cw, bot)          # horizontal bottom
-
-            # Field label — tiny, muted
-            c.setFillColor(LBL_C); c.setFont("Helvetica-Bold", 5.8)
-            c.drawString(cx+pad, top-3.8*mm, lbl.upper())
-
-            # Field value — auto-fit
-            lines, fs = smart_fit(raw, avail)
-            c.setFillColor(VAL_C); c.setFont("Helvetica-Bold", fs)
-            if len(lines) == 1:
-                c.drawString(cx+pad, top-9.5*mm, lines[0])
-            else:
-                c.drawString(cx+pad, top-8.5*mm,  lines[0])
-                c.drawString(cx+pad, top-12.5*mm, lines[1])
-
-        total_h = nrows * CELL_H
-        c.setStrokeColor(TEAL); c.setLineWidth(1.4); c.line(M, cy, M+CW, cy)
-        c.setLineWidth(0.85)
-        c.rect(M, cy-total_h, CW, total_h, fill=0, stroke=1)
-        return cy - total_h
-
-    def mini_sec(cx, cy, w, label):
-        c.setFillColor(TEAL_DIM); c.rect(cx, cy-SH, w, SH, fill=1, stroke=0)
-        c.setFillColor(WHITE); c.setFont("Helvetica-Bold", 7.2)
-        c.drawString(cx+3*mm, cy-3.8*mm, label.upper())
-        return cy - SH
-
-    # ── PATIENT PROFILE  3 × 2 ───────────────────────────────
-    y = section(y, "Patient Profile")
-    pid_clean = info.get("_id", "N/A").replace("-", "")
-    patient_fields = [
-        ("Patient ID",    pid_clean),
+    # ── PATIENT PROFILE  —  3-column grid ───────────────────
+    # 6 fields  →  2 rows × 3 cols
+    pid_no_hyphen = info.get("_id", "N/A").replace("-", "")
+    p_fields = [
+        ("Patient ID",    pid_no_hyphen),
         ("Full Name",     info.get("name", "N/A")),
-        ("Phone",         info.get("phone", "N/A")),
+        ("Phone Number",  info.get("phone", "N/A")),
         ("Email Address", info.get("email", "N/A")),
         ("Country",       info.get("country", "N/A")),
-        ("Address",       info.get("address", "N/A")),   # full — smart_fit wraps it
+        ("Address",       info.get("address", "N/A")[:38] +
+                          ("…" if len(info.get("address", "")) > 38 else "")),
     ]
-    y = draw_grid(y, patient_fields, ncols=3)
-    y -= 3.5*mm
 
-    # ── CLINICAL INPUTS  4 × 2 ───────────────────────────────
-    y = section(y, "Clinical Inputs")
-    clinical_fields = [
-        ("Age",            f"{age} yrs"),
-        ("Gender",         gender),
-        ("Glucose Level",  f"{glucose} mg/dL"),
-        ("Blood Pressure", f"{bp} mmHg"),
-        ("Skin Thickness", f"{skin} mm"),
-        ("Insulin Level",  f"{insulin} IU/mL"),
-        ("BMI",            f"{bmi} kg/m\u00b2"),
-        ("Diabetes PF",    str(dpf)),
+    NCOLS_P  = 3
+    CELL_W_P = CW / NCOLS_P
+    NROWS_P  = 2   # ceil(6 / 3)
+    P_H      = NROWS_P * CELL_H
+
+    y = sec_head(M, y, "Patient Profile", CW) - 0 * mm
+    for idx, (lbl, val) in enumerate(p_fields):
+        row = idx // NCOLS_P
+        col = idx %  NCOLS_P
+        cx  = M + col * CELL_W_P
+        cy  = y - row * CELL_H
+        shade    = (row % 2 == 0)
+        last_col = (col == NCOLS_P - 1)
+        grid_cell(cx, cy, lbl, val, CELL_W_P, shade, last_col=last_col)
+    outer_border(M, y, CW, P_H)
+    y -= P_H + 7 * mm
+
+    # ── CLINICAL INPUTS  —  4-column grid ───────────────────
+    # build field list (8 or 9 if Female)
+    cl_fields = [
+        ("Age",             f"{age} yrs"),
+        ("Gender",          gender),
+        ("Glucose Level",   f"{glucose} mg/dL"),
+        ("Blood Pressure",  f"{bp} mmHg"),
+        ("Skin Thickness",  f"{skin} mm"),
+        ("Insulin Level",   f"{insulin} IU/mL"),
+        ("BMI",             str(bmi)),
+        ("DPF",             str(dpf)),
     ]
     if gender == "Female":
-        clinical_fields.insert(2, ("Pregnancies", str(pregnancies)))
-    y = draw_grid(y, clinical_fields, ncols=4)
-    y -= 3.5*mm
+        cl_fields.insert(2, ("Pregnancies", str(pregnancies)))
 
-    # ── RISK RESULT BANNER ────────────────────────────────────
+    import math
+    NCOLS_C  = 4
+    NROWS_C  = math.ceil(len(cl_fields) / NCOLS_C)
+    CELL_W_C = CW / NCOLS_C
+    C_H      = NROWS_C * CELL_H
+
+    y = sec_head(M, y, "Clinical Inputs", CW) - 0 * mm
+    for idx, (lbl, val) in enumerate(cl_fields):
+        row = idx // NCOLS_C
+        col = idx %  NCOLS_C
+        cx  = M + col * CELL_W_C
+        cy  = y - row * CELL_H
+        shade    = (row % 2 == 0)
+        last_col = (col == NCOLS_C - 1) or (idx == len(cl_fields) - 1)
+        grid_cell(cx, cy, lbl, val, CELL_W_C, shade, last_col=last_col)
+    outer_border(M, y, CW, C_H)
+    y -= C_H + 8 * mm
+
+    # ── RISK RESULT BANNER ───────────────────────────────────
     if prob_positive < 30:
-        BC, BG, BT = GREEN, GREEN_BG, "LOW RISK — Diabetes Unlikely"
+        BC, BG, BT = GREEN_C, GREEN_B, "LOW RISK  —  Diabetes Unlikely"
     elif prob_positive < 70:
-        BC, BG, BT = AMBER, AMBER_BG, "MODERATE RISK — Possible Diabetes"
+        BC, BG, BT = AMBR_C, AMBR_B, "MODERATE RISK  —  Possible Diabetes"
     else:
-        BC, BG, BT = RED, RED_BG, "HIGH RISK — Diabetes Likely"
+        BC, BG, BT = RED_C,  RED_B,  "HIGH RISK  —  Diabetes Likely"
 
-    BNH = 11*mm
-    c.setFillColor(BC);  c.rect(M,      y-BNH, 3*mm,    BNH, fill=1, stroke=0)
-    c.setFillColor(BG);  c.rect(M+3*mm, y-BNH, CW-3*mm, BNH, fill=1, stroke=0)
-    c.setStrokeColor(BC); c.setLineWidth(0.8)
-    c.rect(M, y-BNH, CW, BNH, fill=0, stroke=1)
-    c.setFillColor(BC); c.setFont("Helvetica-Bold", 10.5)
-    c.drawString(M+5.5*mm, y-5.3*mm, BT)
-    c.setFillColor(BC); c.setFont("Helvetica-Bold", 13)
-    c.drawRightString(W-M-3*mm, y-7*mm, f"{prob_positive:.1f}%")
-    c.setFillColor(SLATE); c.setFont("Helvetica", 6)
-    c.drawRightString(W-M-3*mm, y-10.5*mm, "probability score")
-    y -= BNH + 3*mm
+    BANh = 15 * mm
+    # left accent strip
+    c.setFillColor(BC); c.rect(M, y - BANh, 3 * mm, BANh, fill=1, stroke=0)
+    # background fill
+    c.setFillColor(BG); c.rect(M + 3 * mm, y - BANh, CW - 3 * mm, BANh, fill=1, stroke=0)
+    # border
+    c.setStrokeColor(BC); c.setLineWidth(0.9)
+    c.rect(M, y - BANh, CW, BANh, fill=0, stroke=1)
+    # text
+    c.setFillColor(BC); c.setFont("Helvetica-Bold", 12)
+    c.drawString(M + 6 * mm, y - 7 * mm, BT)
+    c.setFillColor(GRY_T); c.setFont("Helvetica", 8)
+    c.drawString(M + 6 * mm, y - 12.5 * mm,
+        f"Risk Percentage: {prob_positive:.1f}%   |   MEDCORE AI · SVM Engine   |   "
+        f"{current_time.strftime('%d %B %Y | %I:%M %p (IST)')}")
+    y -= BANh + 7 * mm
 
-    # ── DIAGNOSTIC VISUALISATION ──────────────────────────────
-    y = section(y, "Diagnostic Data Visualisation")
-    CH   = 48*mm
-    CW_h = (CW - 2*mm) / 2
+    # ── DATA VISUALIZATION ───────────────────────────────────
+    y = sec_head(M, y, "Data Visualization & Analysis", CW) - 2 * mm
+    CH = 57 * mm
+    CW2 = (CW - 4 * mm) / 2
 
-    c.setFillColor(GREY_BG); c.rect(M, y-CH, CW, CH, fill=1, stroke=0)
-    c.drawImage(ImageReader(_make_bar_buf(cause_labels, cause_values)),
-                M+0.5*mm,    y-CH+0.5*mm,
-                width=CW_h-0.5*mm, height=CH-1*mm,
-                preserveAspectRatio=True, anchor="nw")
-    c.drawImage(ImageReader(_make_pie_buf(cause_labels, cause_values)),
-                M+CW_h+2*mm, y-CH+0.5*mm,
-                width=CW_h-2*mm,   height=CH-1*mm,
-                preserveAspectRatio=True, anchor="nw")
-    c.setStrokeColor(CELL_DIV); c.setLineWidth(0.5)
-    c.line(M+CW_h+1*mm, y-CH+2*mm, M+CW_h+1*mm, y-2*mm)
-    c.setStrokeColor(TEAL); c.setLineWidth(0.85)
-    c.rect(M, y-CH, CW, CH, fill=0, stroke=1)
-    y -= CH + 3*mm
+    bar_reader = ImageReader(_make_bar_buf(cause_labels, cause_values))
+    pie_reader = ImageReader(_make_pie_buf(cause_labels, cause_values))
+    c.drawImage(bar_reader, M,            y - CH, width=CW2, height=CH,
+                preserveAspectRatio=True, anchor="c")
+    c.drawImage(pie_reader, M + CW2 + 4 * mm, y - CH, width=CW2, height=CH,
+                preserveAspectRatio=True, anchor="c")
+    # frame around charts
+    c.setStrokeColor(GRY_R); c.setLineWidth(0.5)
+    c.rect(M, y - CH, CW, CH, fill=0, stroke=1)
+    y -= CH + 7 * mm
 
-    # ── RISK FACTORS  |  RECOMMENDATIONS  (side by side) ─────
-    GAP    = 3*mm
-    LEFT_W = CW * 0.53
-    RGHT_W = CW - LEFT_W - GAP
-    LX     = M
-    RX     = M + LEFT_W + GAP
-
-    y_l = mini_sec(LX, y, LEFT_W, "Risk Factor Analysis")
-    y_r = mini_sec(RX, y, RGHT_W, "Recommendations")
-    ROW  = 5.5*mm
+    # ── RISK FACTOR ANALYSIS ─────────────────────────────────
+    y = sec_head(M, y, "Risk Factor Analysis", CW) - 2 * mm
+    RFH = 6 * mm
 
     risk_factors, positive_factors = [], []
     if glucose >= 126:         risk_factors.append("High Glucose Level (≥126 mg/dL)")
-    elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
+    elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100-125 mg/dL)")
     else:                      positive_factors.append("Normal Glucose Level (<100 mg/dL)")
     if bmi > 30:               risk_factors.append("High BMI (Obesity)")
     elif 18.5 <= bmi <= 24.9:  positive_factors.append("Healthy BMI")
@@ -362,56 +339,47 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
     elif 90 <= bp <= 120:      positive_factors.append("Normal Blood Pressure")
     if dpf > 0.5:              risk_factors.append("Higher Genetic Risk")
 
-    def rf_row(cx, cy, w, text, accent, bg, txt_clr):
-        c.setFillColor(bg);     c.rect(cx, cy-ROW, w, ROW, fill=1, stroke=0)
-        c.setFillColor(accent); c.rect(cx, cy-ROW, 2*mm, ROW, fill=1, stroke=0)
-        avw = w - 5.5*mm; fs = 7.2
-        c.setFont("Helvetica", fs)
-        while c.stringWidth(text,"Helvetica",fs) > avw and fs > 5.5: fs -= 0.2
-        t = text
-        c.setFont("Helvetica", fs)
-        while c.stringWidth(t,"Helvetica",fs) > avw and len(t) > 4: t = t[:-2]+"…"
-        c.setFillColor(txt_clr); c.drawString(cx+4.5*mm, cy-ROW/2-1.5*mm, t)
-        c.setStrokeColor(rl_colors.HexColor("#e2e8f0")); c.setLineWidth(0.25)
-        c.line(cx, cy-ROW, cx+w, cy-ROW)
-
     for item in risk_factors:
-        rf_row(LX, y_l, LEFT_W, item, RED, RED_BG, rl_colors.HexColor("#7f1d1d"))
-        y_l -= ROW + 0.4*mm
+        c.setFillColor(rl_colors.HexColor("#fff1f2"))
+        c.rect(M, y - RFH, CW, RFH, fill=1, stroke=0)
+        c.setFillColor(RED_C); c.rect(M, y - RFH, 2.5 * mm, RFH, fill=1, stroke=0)
+        c.setFillColor(rl_colors.HexColor("#991b1b")); c.setFont("Helvetica-Bold", 8.2)
+        c.drawString(M + 5 * mm, y - 4 * mm, f"  {item}")
+        c.setStrokeColor(GRY_R); c.setLineWidth(0.3)
+        c.line(M, y - RFH, M + CW, y - RFH)
+        y -= RFH + 1 * mm
+
     for item in positive_factors:
-        rf_row(LX, y_l, LEFT_W, item, GREEN, GREEN_BG, rl_colors.HexColor("#14532d"))
-        y_l -= ROW + 0.4*mm
-    c.setStrokeColor(TEAL); c.setLineWidth(0.8)
-    c.rect(LX, y_l, LEFT_W, y-SH-y_l, fill=0, stroke=1)
+        c.setFillColor(rl_colors.HexColor("#f0fdf4"))
+        c.rect(M, y - RFH, CW, RFH, fill=1, stroke=0)
+        c.setFillColor(GREEN_C); c.rect(M, y - RFH, 2.5 * mm, RFH, fill=1, stroke=0)
+        c.setFillColor(rl_colors.HexColor("#065f46")); c.setFont("Helvetica-Bold", 8.2)
+        c.drawString(M + 5 * mm, y - 4 * mm, f"  {item}")
+        c.setStrokeColor(GRY_R); c.setLineWidth(0.3)
+        c.line(M, y - RFH, M + CW, y - RFH)
+        y -= RFH + 1 * mm
 
+    y -= 5 * mm
+
+    # ── MEDICAL RECOMMENDATIONS ──────────────────────────────
+    y = sec_head(M, y, "Medical Recommendations", CW) - 3 * mm
     for r in recs_for_pdf:
-        c.setFillColor(rl_colors.HexColor("#f0f9ff"))
-        c.rect(RX, y_r-ROW, RGHT_W, ROW, fill=1, stroke=0)
-        c.setFillColor(TEAL)
-        c.circle(RX+3*mm, y_r-ROW/2-0.3*mm, 1.3*mm, fill=1, stroke=0)
-        avw = RGHT_W - 7*mm; fs = 7.2
-        t = r; c.setFont("Helvetica", fs)
-        while c.stringWidth(t,"Helvetica",fs) > avw and fs > 5.5: fs -= 0.2
-        c.setFont("Helvetica", fs)
-        while c.stringWidth(t,"Helvetica",fs) > avw and len(t) > 4: t = t[:-2]+"…"
-        c.setFillColor(rl_colors.HexColor("#0c4a6e")); c.drawString(RX+6.5*mm, y_r-ROW/2-1.5*mm, t)
-        c.setStrokeColor(CELL_DIV); c.setLineWidth(0.25)
-        c.line(RX, y_r-ROW, RX+RGHT_W, y_r-ROW)
-        y_r -= ROW + 0.4*mm
-    c.setStrokeColor(TEAL); c.setLineWidth(0.8)
-    c.rect(RX, y_r, RGHT_W, y-SH-y_r, fill=0, stroke=1)
+        c.setFillColor(BLACK); c.setFont("Helvetica", 8.5)
+        c.drawString(M + 5 * mm, y - 4 * mm, f"  \u2022   {r}")
+        y -= 6.5 * mm
 
-    # ── FOOTER ───────────────────────────────────────────────
-    FH = 11*mm
-    c.setFillColor(GREY_BG); c.rect(0, 0, W, FH, fill=1, stroke=0)
-    c.setStrokeColor(TEAL); c.setLineWidth(0.6); c.line(0, FH, W, FH)
-    c.setFillColor(SLATE); c.setFont("Helvetica-Oblique", 6)
-    c.drawString(M, 7.5*mm,
-        "Disclaimer: This AI-generated report is for informational purposes only "
-        "and does not constitute professional medical advice.")
-    c.setFont("Helvetica", 6)
-    c.drawString(M, 3.5*mm, "Consult a qualified healthcare professional for diagnosis and treatment.")
-    c.drawRightString(W-M, 5.5*mm, "Diabetes Prediction System  ·  Page 1 of 1")
+    # ── FOOTER ──────────────────────────────────────────────
+    FH = 13 * mm
+    c.setFillColor(GRY_L); c.rect(0, 0, W, FH, fill=1, stroke=0)
+    c.setStrokeColor(GRY_R); c.setLineWidth(0.5); c.line(0, FH, W, FH)
+    c.setFillColor(GRY_T); c.setFont("Helvetica-Oblique", 7)
+    c.drawString(M, 9 * mm,
+        "MEDICAL DISCLAIMER: This report is AI-generated and does not replace professional medical advice.")
+    c.drawString(M, 5 * mm,
+        "Consult a qualified healthcare professional for clinical diagnosis, interpretation, and treatment.")
+    c.setFont("Helvetica", 7)
+    c.drawRightString(W - M, 7 * mm,
+        f"Diabetes Prediction System  |  {current_time.strftime('%d %B %Y')}  |  Page 1 of 1")
 
     c.save()
     return buf.getvalue()
