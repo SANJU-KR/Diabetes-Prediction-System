@@ -163,9 +163,10 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
     c.drawString(M, H - 16.5 * mm,
                  "AI-Powered Clinical Risk Assessment  ·  SVM Architecture")
 
-    # Right: report meta
+    # Right: report meta  (patient ID shown WITHOUT hyphen)
+    pid_display = info.get('_id', 'N/A').replace('-', '')
     c.setFillColor(rl_colors.HexColor("#93c5fd")); c.setFont("Helvetica", 7.5)
-    c.drawRightString(W - M, H - 9 * mm,  f"Report ID: {info.get('_id', 'N/A')}")
+    c.drawRightString(W - M, H - 9 * mm,  f"Report ID: {pid_display}")
     c.drawRightString(W - M, H - 15 * mm,
                       f"Generated: {current_time.strftime('%d %B %Y | %I:%M %p (IST)')}")
     c.drawRightString(W - M, H - 21 * mm, "CONFIDENTIAL MEDICAL DOCUMENT")
@@ -189,64 +190,98 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
         c.drawString(cx + 3 * mm, cy - 4 * mm, label.upper())
         return cy - 6 * mm
 
-    ROW_H = 6.4 * mm
-    KEY_W = 36 * mm
+    CELL_H = 14 * mm   # height of each grid cell (label + value)
 
-    def kv_row(cx, ry, key, val, w, shade):
-        """One key-value row with alternating shade."""
+    def grid_cell(cx, cy, label, value, cw, shade, last_col=False, last_row=False):
+        """Draw one label-over-value cell inside a grid table."""
+        # background
         c.setFillColor(ROW_ALT if shade else WHITE)
-        c.rect(cx, ry, w, ROW_H, fill=1, stroke=0)
-        c.setStrokeColor(GRY_R); c.setLineWidth(0.3)
-        c.line(cx, ry, cx + w, ry)
-        # key
-        c.setFillColor(GRY_T); c.setFont("Helvetica-Bold", 7.8)
-        c.drawString(cx + 2 * mm, ry + 2 * mm, str(key))
-        # value — truncate to fit
-        c.setFillColor(BLACK); c.setFont("Helvetica", 8.2)
-        v = str(val)
-        while c.stringWidth(v, "Helvetica", 8.2) > w - KEY_W - 2 * mm and len(v) > 6:
-            v = v[:-4] + "..."
-        c.drawString(cx + KEY_W, ry + 2 * mm, v)
+        c.rect(cx, cy - CELL_H, cw, CELL_H, fill=1, stroke=0)
+        # right border (vertical divider) — skip for last column
+        c.setStrokeColor(GRY_R); c.setLineWidth(0.4)
+        if not last_col:
+            c.line(cx + cw, cy - CELL_H, cx + cw, cy)
+        # bottom border
+        c.line(cx, cy - CELL_H, cx + cw, cy - CELL_H)
+        # label (small caps, muted)
+        c.setFillColor(GRY_T); c.setFont("Helvetica-Bold", 7)
+        c.drawString(cx + 2.5 * mm, cy - 5 * mm, str(label).upper())
+        # value (larger, dark)
+        c.setFillColor(BLACK); c.setFont("Helvetica-Bold", 8.5)
+        v = str(value)
+        # truncate if too wide
+        max_w = cw - 5 * mm
+        while c.stringWidth(v, "Helvetica-Bold", 8.5) > max_w and len(v) > 4:
+            v = v[:-3] + ".."
+        c.drawString(cx + 2.5 * mm, cy - 11 * mm, v)
 
-    # ── TWO-COLUMN: PATIENT PROFILE  |  CLINICAL INPUTS ────
-    GAP  = 5 * mm
-    HALF = (CW - GAP) / 2
-    LX   = M
-    RX   = M + HALF + GAP
+    def outer_border(cx, cy, w, h):
+        """Draw outer border rect around a grid block."""
+        c.setStrokeColor(TEAL); c.setLineWidth(0.8)
+        c.rect(cx, cy - h, w, h, fill=0, stroke=1)
 
-    p_rows = [
-        ("Patient ID",   info.get("_id", "N/A")),
-        ("Full Name",    info.get("name", "N/A")),
+    # ── PATIENT PROFILE  —  3-column grid ───────────────────
+    # 6 fields  →  2 rows × 3 cols
+    pid_no_hyphen = info.get("_id", "N/A").replace("-", "")
+    p_fields = [
+        ("Patient ID",    pid_no_hyphen),
+        ("Full Name",     info.get("name", "N/A")),
+        ("Phone Number",  info.get("phone", "N/A")),
         ("Email Address", info.get("email", "N/A")),
-        ("Phone Number", info.get("phone", "N/A")),
-        ("Country",      info.get("country", "N/A")),
-        ("Address",      info.get("address", "N/A")[:46] +
-                         ("…" if len(info.get("address", "")) > 46 else "")),
+        ("Country",       info.get("country", "N/A")),
+        ("Address",       info.get("address", "N/A")[:38] +
+                          ("…" if len(info.get("address", "")) > 38 else "")),
     ]
 
-    cl_rows = [
-        ("Age",                     f"{age} Years"),
-        ("Gender",                  gender),
-        ("Glucose Level",           f"{glucose} mg/dL"),
-        ("Blood Pressure",          f"{bp} mmHg"),
-        ("Skin Thickness",          f"{skin} mm"),
-        ("Insulin Level",           f"{insulin} IU/mL"),
-        ("BMI",                     str(bmi)),
-        ("Diabetes Pedigree Function", str(dpf)),
+    NCOLS_P  = 3
+    CELL_W_P = CW / NCOLS_P
+    NROWS_P  = 2   # ceil(6 / 3)
+    P_H      = NROWS_P * CELL_H
+
+    y = sec_head(M, y, "Patient Profile", CW) - 0 * mm
+    for idx, (lbl, val) in enumerate(p_fields):
+        row = idx // NCOLS_P
+        col = idx %  NCOLS_P
+        cx  = M + col * CELL_W_P
+        cy  = y - row * CELL_H
+        shade    = (row % 2 == 0)
+        last_col = (col == NCOLS_P - 1)
+        grid_cell(cx, cy, lbl, val, CELL_W_P, shade, last_col=last_col)
+    outer_border(M, y, CW, P_H)
+    y -= P_H + 7 * mm
+
+    # ── CLINICAL INPUTS  —  4-column grid ───────────────────
+    # build field list (8 or 9 if Female)
+    cl_fields = [
+        ("Age",             f"{age} yrs"),
+        ("Gender",          gender),
+        ("Glucose Level",   f"{glucose} mg/dL"),
+        ("Blood Pressure",  f"{bp} mmHg"),
+        ("Skin Thickness",  f"{skin} mm"),
+        ("Insulin Level",   f"{insulin} IU/mL"),
+        ("BMI",             str(bmi)),
+        ("DPF",             str(dpf)),
     ]
     if gender == "Female":
-        cl_rows.insert(2, ("Number of Pregnancies", str(pregnancies)))
+        cl_fields.insert(2, ("Pregnancies", str(pregnancies)))
 
-    ly = sec_head(LX, y, "Patient Profile", HALF)
-    ry_top = sec_head(RX, y, "Clinical Inputs", HALF)
+    import math
+    NCOLS_C  = 4
+    NROWS_C  = math.ceil(len(cl_fields) / NCOLS_C)
+    CELL_W_C = CW / NCOLS_C
+    C_H      = NROWS_C * CELL_H
 
-    for i, (k, v) in enumerate(p_rows):
-        kv_row(LX, ly - (i + 1) * ROW_H, k, v, HALF, i % 2 == 0)
-    for i, (k, v) in enumerate(cl_rows):
-        kv_row(RX, ry_top - (i + 1) * ROW_H, k, v, HALF, i % 2 == 0)
-
-    rows_used = max(len(p_rows), len(cl_rows))
-    y = min(ly, ry_top) - rows_used * ROW_H - 8 * mm
+    y = sec_head(M, y, "Clinical Inputs", CW) - 0 * mm
+    for idx, (lbl, val) in enumerate(cl_fields):
+        row = idx // NCOLS_C
+        col = idx %  NCOLS_C
+        cx  = M + col * CELL_W_C
+        cy  = y - row * CELL_H
+        shade    = (row % 2 == 0)
+        last_col = (col == NCOLS_C - 1) or (idx == len(cl_fields) - 1)
+        grid_cell(cx, cy, lbl, val, CELL_W_C, shade, last_col=last_col)
+    outer_border(M, y, CW, C_H)
+    y -= C_H + 8 * mm
 
     # ── RISK RESULT BANNER ───────────────────────────────────
     if prob_positive < 30:
@@ -342,8 +377,9 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
         "MEDICAL DISCLAIMER: This report is AI-generated and does not replace professional medical advice.")
     c.drawString(M, 5 * mm,
         "Consult a qualified healthcare professional for clinical diagnosis, interpretation, and treatment.")
-  
-        
+    c.setFont("Helvetica", 7)
+    c.drawRightString(W - M, 7 * mm,
+        f"Diabetes Prediction System  |  {current_time.strftime('%d %B %Y')}  |  Page 1 of 1")
 
     c.save()
     return buf.getvalue()
@@ -554,7 +590,7 @@ div[data-testid="stError"] p {{ color: #fca5a5 !important; font-weight: 600; }}
 
                 ist = pytz.timezone("Asia/Kolkata")
                 current_time = datetime.now(ist)
-                patient_id = "PAT" + str(uuid.uuid4().int)[:6]
+                patient_id = "PAT" + str(uuid.uuid4().int)[:6]  # no hyphen
 
                 user_data = {
                     "_id": patient_id,
@@ -1082,5 +1118,3 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
-
-
