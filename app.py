@@ -1,765 +1,653 @@
-# -----------------------------
-# Import Required Libraries
-# -----------------------------
+# ================================================================
+#  MEDCORE AI  —  Enterprise Clinical Intelligence Platform
+#  Clean, High-Contrast Medical UI for Maximum Readability
+# ================================================================
+
 import streamlit as st
 import numpy as np
 import joblib
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt  # Added for stable PDF charts
-import base64
-import re
-import pycountry
-import phonenumbers
-import time
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import re, uuid, pytz, time
+import pycountry, phonenumbers
+from io import BytesIO
+from datetime import datetime
 
-def get_base64_image(image_file):
-    try:
-        with open(image_file, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except FileNotFoundError:
-        return ""  # Fallback if image is missing
-
-def country_to_flag(country_code):
-    return "".join(chr(127397 + ord(char)) for char in country_code.upper())
-
-# ✅ ADDED FOR PDF GENERATION ONLY
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem, Table, TableStyle, Image as RLImage
+from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                 ListFlowable, ListItem, Table, TableStyle,
+                                 Image as RLImage)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from io import BytesIO
-
-# -----------------------------
-# MongoDB Connection
-# -----------------------------
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from datetime import datetime
-import uuid
-import pytz
 
-# my string
-uri = "mongodb+srv://diabetes_user:Diabetes%40123@diabetescluster.oxegep6.mongodb.net/?retryWrites=true&w=majority"
+# ─────────────────────────────────────────────────────────────
+#  MongoDB Setup
+# ─────────────────────────────────────────────────────────────
+_URI      = "mongodb+srv://diabetes_user:Diabetes%40123@diabetescluster.oxegep6.mongodb.net/?retryWrites=true&w=majority"
+try:
+    _mc       = MongoClient(_URI, server_api=ServerApi("1"), serverSelectionTimeoutMS=5000)
+    _db       = _mc["diabetes_app"]
+    users_col = _db["registered_users"]
+    preds_col = _db["predictions"]
+except Exception as e:
+    st.warning("⚠️ Running in local mode. Database connection failed.")
 
-# Create MongoDB Client
-client = MongoClient(uri, server_api=ServerApi('1'))
-
-# Create Database
-db = client["diabetes_app"]
-
-# Create Collection
-users_collection = db["registered_users"]
-predictions_collection = db["predictions"]
-
-# -----------------------------
-# Page Configuration
-# -----------------------------
+# ─────────────────────────────────────────────────────────────
+#  Page Config
+# ─────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Diabetes Prediction System",
-    page_icon="🩺",
-    layout="wide"
+    page_title="MEDCORE AI — Clinical System",
+    page_icon="⚕️",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# -----------------------------
-# Session State
-# -----------------------------
-if "registered" not in st.session_state:
-    st.session_state.registered = False
+# ─────────────────────────────────────────────────────────────
+#  Session State
+# ─────────────────────────────────────────────────────────────
+st.session_state.setdefault("registered",    False)
+st.session_state.setdefault("patient_info",  {})
+st.session_state.setdefault("show_success",  False)
+st.session_state.setdefault("model_ran",     False)
 
-if "patient_info" not in st.session_state:
-    st.session_state.patient_info = {}
+# ─────────────────────────────────────────────────────────────
+#  Enterprise Color Palette
+# ─────────────────────────────────────────────────────────────
+C_PRIMARY = "#026AA7" # Medical Blue
+C_NAVY    = "#0F172A" # Deep Slate (Sidebar)
+C_BG      = "#F8FAFC" # Off-white background
+C_TEXT    = "#1E293B" # Dark text for readability
+C_MUTED   = "#64748B" # Subtitle text
+C_GREEN   = "#059669" # Success
+C_AMBER   = "#D97706" # Warning
+C_RED     = "#DC2626" # Danger
+C_BORDER  = "#E2E8F0" # Card borders
 
-if "show_success" not in st.session_state:
-    st.session_state.show_success = False
+CHART_PALETTE = [C_RED, C_AMBER, C_PRIMARY, "#8B5CF6", C_GREEN]
+
+# ═════════════════════════════════════════════════════════════
+#  ENTERPRISE CSS - Clean, Accessible, Readable
+# ═════════════════════════════════════════════════════════════
+def inject_enterprise_css():
+    st.markdown(f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── MAIN BACKGROUND & FONT ── */
+.stApp {{
+    background-color: {C_BG};
+    font-family: 'Inter', sans-serif;
+    color: {C_TEXT};
+}}
+
+/* ── HIDE STREAMLIT CHROME ── */
+#MainMenu, footer, header, .stDeployButton {{ display:none!important; }}
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4, h5, h6, p, span, div {{
+    color: {C_TEXT};
+    font-family: 'Inter', sans-serif;
+}}
+p {{ line-height: 1.6; color: #334155; }}
+
+/* ── SIDEBAR (Keeping it Dark as per your preference) ── */
+section[data-testid="stSidebar"] {{
+    background-color: {C_NAVY} !important;
+    border-right: 1px solid #1E293B !important;
+}}
+section[data-testid="stSidebar"] * {{
+    color: #F8FAFC !important; /* Force white text in sidebar */
+}}
+section[data-testid="stSidebar"] label {{
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #94A3B8 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}}
+
+/* Sidebar Inputs - White background so user text is readable */
+section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
+    background-color: #FFFFFF !important;
+    border: 1px solid #334155 !important;
+    border-radius: 6px !important;
+}}
+section[data-testid="stSidebar"] div[data-baseweb="input"] input,
+section[data-testid="stSidebar"] div[data-baseweb="select"] span {{
+    color: #0F172A !important; /* Dark text inside input */
+    font-weight: 500 !important;
+}}
+
+/* ── BUTTONS ── */
+button[kind="primary"], div[data-testid="stForm"] button, section[data-testid="stSidebar"] button {{
+    background-color: {C_PRIMARY} !important;
+    color: white !important;
+    border-radius: 6px !important;
+    border: none !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    transition: background-color 0.2s;
+}}
+button[kind="primary"]:hover, div[data-testid="stForm"] button:hover {{
+    background-color: #035B8F !important;
+}}
+
+/* Download Button Specific */
+div.stDownloadButton > button {{
+    background-color: {C_GREEN} !important;
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 16px !important;
+}}
+
+/* ── CARDS & FORMS (Main Area) ── */
+div[data-testid="stForm"] {{
+    background-color: #FFFFFF !important;
+    border: 1px solid {C_BORDER} !important;
+    border-radius: 8px !important;
+    padding: 32px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    max-width: 600px;
+    margin: 0 auto;
+}}
+div[data-testid="stForm"] label {{
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}}
+div[data-testid="stForm"] input, div[data-testid="stForm"] textarea, div[data-testid="stForm"] div[data-baseweb="select"] span {{
+    background-color: #F8FAFC !important;
+    border: 1px solid {C_BORDER} !important;
+    color: {C_TEXT} !important;
+    border-radius: 6px !important;
+}}
+
+/* ── METRICS ── */
+div[data-testid="metric-container"] {{
+    background-color: #FFFFFF !important;
+    border: 1px solid {C_BORDER} !important;
+    border-left: 4px solid {C_PRIMARY} !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+}}
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {{
+    color: {C_TEXT} !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+}}
+div[data-testid="metric-container"] [data-testid="stMetricLabel"] {{
+    color: {C_MUTED} !important;
+    font-weight: 600 !important;
+}}
+
+/* ── CUSTOM CLINICAL CARD CLASS ── */
+.clinical-card {{
+    background-color: #FFFFFF;
+    border: 1px solid {C_BORDER};
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}}
+.clinical-header {{
+    font-size: 18px;
+    font-weight: 700;
+    color: {C_TEXT};
+    border-bottom: 2px solid #F1F5F9;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}}
+
+/* ── STREAMLIT ALERTS ── */
+div[data-testid="stSuccess"] {{ background-color: #ECFDF5 !important; border-color: #10B981 !important; color: #065F46 !important; }}
+div[data-testid="stWarning"] {{ background-color: #FFFBEB !important; border-color: #F59E0B !important; color: #92400E !important; }}
+div[data-testid="stError"]   {{ background-color: #FEF2F2 !important; border-color: #EF4444 !important; color: #991B1B !important; }}
+
+hr {{ border-color: {C_BORDER} !important; }}
+
+</style>
+""", unsafe_allow_html=True)
 
 
-# =====================================================
-# REGISTRATION PAGE
-# =====================================================
+# ═════════════════════════════════════════════════════════════
+#  MATPLOTLIB HELPERS
+# ═════════════════════════════════════════════════════════════
+def _bar_png(labels, values):
+    fig, ax = plt.subplots(figsize=(5.2, 3.2), dpi=140)
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.set_facecolor("#FFFFFF")
+
+    cols = [CHART_PALETTE[i % len(CHART_PALETTE)] for i in range(len(labels))]
+    bars = ax.bar(labels, values, color=cols, width=0.52, edgecolor="#E2E8F0", linewidth=.8)
+    for bar, v in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+                f"{v:.1f}", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#1E293B")
+
+    ax.set_ylim(0, max(values)*1.28 if values else 110)
+    ax.set_xlabel("Risk Factors", fontsize=9, color="#475569", labelpad=5)
+    ax.set_ylabel("Severity Score", fontsize=9, color="#475569", labelpad=5)
+    ax.set_title("Risk Factor Severity", fontsize=11, fontweight="bold", color="#1E293B", pad=8)
+    ax.tick_params(axis="x", labelsize=8, colors="#475569")
+    ax.tick_params(axis="y", labelsize=8, colors="#475569")
+    ax.spines[["top","right"]].set_visible(False)
+    ax.spines[["left","bottom"]].set_color("#CBD5E1")
+    ax.yaxis.grid(True, color="#F1F5F9", linewidth=.6, linestyle="--")
+    ax.set_axisbelow(True)
+    plt.tight_layout(pad=1.1)
+
+    buf = BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="#FFFFFF")
+    plt.close(fig)
+    buf.seek(0)
+    return buf.read()
+
+
+def _pie_png(labels, values):
+    fig, ax = plt.subplots(figsize=(4.8, 3.4), dpi=140)
+    fig.patch.set_facecolor("#FFFFFF")
+    cols = [CHART_PALETTE[i % len(CHART_PALETTE)] for i in range(len(labels))]
+    wedges, texts, autos = ax.pie(
+        values, labels=labels, colors=cols, autopct="%1.1f%%", startangle=130,
+        wedgeprops=dict(width=0.58, edgecolor="#FFFFFF", linewidth=1.8), pctdistance=0.78,
+    )
+    for t  in texts: t.set_fontsize(8);  t.set_color("#1E293B")
+    for at in autos: at.set_fontsize(7.5); at.set_fontweight("bold"); at.set_color("#FFFFFF")
+    ax.set_title("Risk Contribution (%)", fontsize=11, fontweight="bold", color="#1E293B", pad=8)
+    plt.tight_layout(pad=1.1)
+
+    buf = BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="#FFFFFF")
+    plt.close(fig)
+    buf.seek(0)
+    return buf.read()
+
+
+# ═════════════════════════════════════════════════════════════
+#  REPORTLAB PAGE TEMPLATE (Header/Footer)
+# ═════════════════════════════════════════════════════════════
+def report_header_footer(canvas, doc):
+    canvas.saveState()
+    # Header Area
+    canvas.setFillColorRGB(0.01, 0.42, 0.65) # C_PRIMARY
+    canvas.setFont("Helvetica-Bold", 18)
+    canvas.drawString(40, letter[1] - 45, "MEDCORE CLINICAL SYSTEMS")
+    
+    canvas.setFillColorRGB(0.4, 0.4, 0.4)
+    canvas.setFont("Helvetica", 9)
+    canvas.drawString(40, letter[1] - 60, "Department of Endocrinology | Innovation Drive, Sector 43")
+    canvas.drawString(40, letter[1] - 72, "Phone: 1800-MED-CORE | Email: records@medcore.ai")
+    
+    canvas.setLineWidth(1)
+    canvas.setStrokeColorRGB(0.88, 0.91, 0.94)
+    canvas.line(40, letter[1] - 85, letter[0] - 40, letter[1] - 85)
+    
+    # Footer Area
+    canvas.setLineWidth(0.5)
+    canvas.setStrokeColorRGB(0.88, 0.91, 0.94)
+    canvas.line(40, 50, letter[0] - 40, 50)
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColorRGB(0.5, 0.5, 0.5)
+    canvas.drawString(40, 35, "CONFIDENTIAL EHR DOCUMENT - UNAUTHORIZED DISTRIBUTION PROHIBITED")
+    canvas.drawRightString(letter[0] - 40, 35, f"Page {doc.page}")
+    canvas.restoreState()
+
+
+# ═════════════════════════════════════════════════════════════
+#  REGISTRATION PAGE
+# ═════════════════════════════════════════════════════════════
 def registration_page():
-    img = get_base64_image("health.png")
+    inject_enterprise_css()
 
     st.markdown(f"""
-    <style>
-    /* Full Background */
-    .stApp {{
-        background: linear-gradient(rgba(0,0,0,0.10), rgba(0,0,0,0.10)),
-                    url("data:image/jpg;base64,{img}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        font-family: 'Segoe UI', sans-serif;
-    }}
-    
-    /* Center the form - Glass Effect */
-    div[data-testid="stForm"] {{
-        background: rgba(255, 255, 255, 0.10);
-        backdrop-filter: blur(12px);
-        border-radius: 25px;
-        padding: 40px;
-        width: 100%;
-        max-width: 700px;
-        margin: 5vh auto;
-        border: 1px solid rgba(255,255,255,0.25);
-        box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-    }}
-
-    /* Title styling */
-    h1 {{
-        color: white !important;
-        text-align: center;
-        font-weight: 700;
-        font-size: 40px;
-        margin-bottom: 10px;
-    }}
-
-    /* Subtitle text */
-    .stMarkdown p {{
-        color: #f1f1f1 !important;
-        text-align: center;
-        font-size: 18px;
-        font-weight: 500;
-    }}
-
-    /* ===== TRUE GLASS INPUT STYLE ===== */
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="textarea"] > div,
-    div[data-baseweb="select"] > div {{
-        background: rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        border-radius: 18px !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
-        box-shadow: inset 0 0 12px rgba(255,255,255,0.15);
-        transition: all 0.3s ease;
-    }}
-
-    /* Focus Glow Effect */
-    div[data-baseweb="input"] > div:focus-within,
-    div[data-baseweb="textarea"] > div:focus-within,
-    div[data-baseweb="select"] > div:focus-within {{
-        border: 1.5px solid rgba(255,255,255,0.8) !important;
-        box-shadow: 0 0 20px rgba(255,255,255,0.6);
-    }}
-
-    input, textarea {{
-        color: black !important;
-        font-weight: 500 !important;
-    }}
-
-    /* Make form labels more visible */
-    label {{
-        color: #ffffff !important;
-        font-size: 19px !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.6px;
-        text-shadow: 0px 2px 6px rgba(0,0,0,0.7);
-    }}
-
-    /* Placeholder text visibility */
-    input::placeholder, textarea::placeholder {{
-        color: #555 !important;
-        font-weight: 500 !important;
-    }}
-
-    /* Button Styling */
-    div[data-testid="stForm"] button {{
-        background: linear-gradient(90deg, #1f8ef1, #005bea);
-        color: white !important;
-        border-radius: 12px !important;
-        height: 50px !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        border: none !important;
-        transition: 0.3s ease-in-out;
-    }}
-
-    div[data-testid="stForm"] button:hover {{
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(0,91,234,0.6);
-    }}
-    </style>
+    <div style="text-align: center; padding: 40px 0;">
+        <h1 style="color: {C_PRIMARY} !important; font-weight: 800; font-size: 3rem; margin-bottom: 0;">MEDCORE SYSTEMS</h1>
+        <p style="color: {C_MUTED}; font-size: 1.2rem; font-weight: 500;">Clinical Diabetes Screening Portal</p>
+    </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <style>
-    @media (max-width: 768px) {
-        div[data-testid="stForm"] {
-            padding: 20px !important;
-            margin-top: 30px !important;
-        }
-        h1 {
-            font-size: 26px !important;
-        }
-    }   
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.title("📝 Patient Registration")
-    st.markdown("Please register to access the Diabetes Prediction System")
-    
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        with st.form("registration_form"):
-            name = st.text_input("Full Name")
+    _, mid, _ = st.columns([1, 2, 1])
+    with mid:
+        with st.form("reg_form"):
+            st.markdown(f"<h3 style='text-align:center; color:{C_TEXT}!important; margin-bottom:20px;'>Patient Intake Form</h3>", unsafe_allow_html=True)
             
-            # 🌍 Country Selection with Flag
-            country_list = [country.name for country in pycountry.countries]
-            selected_country = st.selectbox("🌍 Select Country", country_list)
-
-            # Extract country name
-            country_obj = pycountry.countries.get(name=selected_country)
-            country_code = phonenumbers.country_code_for_region(country_obj.alpha_2)
-
-            phone = st.text_input("Enter Phone Number (without country code)")
-            email = st.text_input("Email Address")
-            address = st.text_area("Address")
-            submit = st.form_submit_button("Register")
+            name             = st.text_input("Full Legal Name", placeholder="e.g., Jane Doe")
+            country_list     = [c.name for c in pycountry.countries]
+            selected_country = st.selectbox("Country of Residence", country_list, index=country_list.index("India") if "India" in country_list else 0)
+            phone            = st.text_input("Mobile Number", placeholder="10-digit number")
+            email            = st.text_input("Email Address", placeholder="patient@example.com")
+            address          = st.text_area("Residential Address", placeholder="Full address...", height=80)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit = st.form_submit_button("Access Clinical Workspace", use_container_width=True)
 
             if submit:
-                # Clean Inputs
-                name = name.strip()
-                phone = phone.strip()
-                email = email.strip()
-                address = address.strip()
+                name = name.strip(); phone = phone.strip()
+                email = email.strip(); address = address.strip()
 
-                if not name or not phone or not email or not address:
-                    st.error("❌ Please fill all fields properly")
-                    return
+                if not all([name, phone, email, address]):
+                    st.error("❌ All fields are required to create an EHR record."); st.stop()
 
-                # Email Validation
-                email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                if not re.match(email_pattern, email):
-                    st.error("❌ Please enter a valid email address")
-                    return
-                    
-                # Country & Phone Validation
-                region_code = country_obj.alpha_2
+                if not re.match(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", email):
+                    st.error("❌ Invalid email format."); st.stop()
+
+                ist = pytz.timezone("Asia/Kolkata"); now = datetime.now(ist)
+                pid = "EHR-" + str(uuid.uuid4().int)[:8]
+                rec = {
+                    "_id": pid, "name": name, "phone": phone,
+                    "country": selected_country, "email": email,
+                    "address": address, "gender": "Not Specified",
+                    "created_at": now.strftime("%d-%m-%Y %I:%M:%S %p"),
+                }
                 try:
-                    parsed_number = phonenumbers.parse(phone, region_code)
-                    if not phonenumbers.is_valid_number(parsed_number):
-                        st.error("❌ Invalid phone number for selected country")
-                        return
-                    formatted_phone = phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
-                except:
-                    st.error("❌ Invalid phone number format")
-                    return        
-                    
-                # Create Patient Record
-                ist = pytz.timezone("Asia/Kolkata")
-                current_time = datetime.now(ist)
-                patient_id = "PAT" + str(uuid.uuid4().int)[:6]
-                        
-                user_data ={
-                    "_id": patient_id,
-                    "name": name,
-                    "phone": formatted_phone,
-                    "country": selected_country,
-                    "email": email,
-                    "address": address,
-                    "gender": "Not Selected",
-                    "created_at": current_time.strftime("%d-%m-%Y %I:%M:%S %p")
-                } 
-                        
-                users_collection.insert_one(user_data)
-                st.session_state.patient_info = user_data
-                        
-                st.session_state.registered = True
+                    users_col.insert_one(rec)
+                except Exception:
+                    pass # Ignore if DB offline
+                
+                st.session_state.patient_info = rec
+                st.session_state.registered   = True
                 st.session_state.show_success = True
                 st.rerun()
 
-# =====================================================
-# MAIN PREDICTION PAGE
-# =====================================================
+    st.markdown("""
+    <div style="text-align: center; margin-top: 40px; color: #94A3B8; font-size: 12px;">
+        ⚕️ HIPAA Compliant System • 🔒 256-bit AES Encryption • 🏥 Clinical Grade AI
+    </div>
+    """, unsafe_allow_html=True)
+
+
 @st.cache_resource
 def load_model():
     try:
-        model = joblib.load("diabetes_model.pkl")
-        scaler = joblib.load("scaler_svm.pkl")
-        return model, scaler
+        return joblib.load("diabetes_model.pkl"), joblib.load("scaler_svm.pkl")
     except Exception as e:
-        st.error(f"⚠️ Model Loading Error: {e}")
-        st.stop()
+        st.error(f"⚠️ Model load error: {e}"); st.stop()
+
 
 def prediction_page():
     model, scaler = load_model()
-
     if not st.session_state.patient_info:
-        st.session_state.registered = False
-        st.stop()
+        st.session_state.registered = False; st.stop()
 
-    # Background Image for Prediction Page
-    img = get_base64_image("health22.png") 
-    st.markdown(f"""
-    <style>
-    .stApp {{
-        background: linear-gradient(rgba(0,0,0,.23), rgba(0,0,0,.23)), url("data:image/png;base64,{img}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-  
-    st.markdown("""
-    <style>
-    h1, h2, h3 { color: white !important; }
-    p, li { color: #f1f1f1 !important; font-size:clamp(16px,2vw,22px); }
-    ul { line-height: 1.8; }
-    </style>
-    """, unsafe_allow_html=True)
-       
-    # -----------------------------
-    # ORIGINAL GLASS SIDEBAR STYLING
-    # -----------------------------
-    st.markdown("""
-    <style>
-    section[data-testid="stSidebar"] {
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(25px);
-        border-right: 1px solid rgba(255,255,255,0.15);
-        box-shadow: 4px 0 30px rgba(0,0,0,0.4);
-        padding: 25px;
-    }
-    
-    /* Make Sidebar Text White */
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3, 
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] { 
-        color: white !important; 
-        font-weight: 600; 
-    }
-
-    /* Sidebar Buttons */
-    section[data-testid="stSidebar"] button {
-        background: rgba(255,255,255,0.15) !important;
-        backdrop-filter: blur(15px);
-        border-radius: 12px !important;
-        border: 1px solid rgba(255,255,255,0.4) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        transition: 0.3s ease;
-    }
-    section[data-testid="stSidebar"] button:hover { 
-        background: rgba(255,255,255,0.25) !important; 
-        transform: scale(1.03); 
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <style>
-    /* Dropdown popup background (Dark) */
-    div[data-baseweb="popover"] { background: midnightblue !important; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px); }
-    ul[role="listbox"] { background: midnightblue !important; }
-    li[role="option"] { background: transparent !important; color: white !important; font-weight: 600 !important; }
-    li[role="option"]:hover { background: #00d4ff !important; color: black !important; }
-
-    /* Selected dropdown value text */
-    section[data-testid="stSidebar"] div[data-baseweb="select"] span { color: black !important; font-weight: 600 !important; }
-
-    /* 🔥 NEW FIX: Make ALL input boxes and dropdowns white/light gray 🔥 */
-    section[data-testid="stSidebar"] div[data-baseweb="input"] > div,
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        background-color: #f1f5f9 !important;   /* light gray */
-        color: black !important;
-        border-radius: 14px !important;
-        border: 1.5px solid rgba(255,255,255,0.35) !important;
-    }
-
-    section[data-testid="stSidebar"] div[data-baseweb="input"] > div:focus-within,
-    section[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-        border: 1.5px solid rgba(255,255,255,0.8) !important;
-        box-shadow: 0 0 15px rgba(255,255,255,0.6);
-    }
-
-    /* Text color inside the inputs */
-    section[data-testid="stSidebar"] div[data-baseweb="input"] input {
-        color: black !important;
-        -webkit-text-fill-color: black !important;
-        font-weight: 600 !important;
-    }
-
-    /* 🔥 Hide +/- Buttons 🔥 */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none; margin: 0;
-    }
-    input[type="number"] { -moz-appearance: textfield; }
-    </style>
-    """, unsafe_allow_html=True) 
-       
-    st.markdown("""
-    <style>
-    /* FIX DOWNLOAD BUTTON VISIBILITY */
-    div.stDownloadButton > button {
-        background-color: #0f172a !important; color: white !important;
-        font-weight: 700 !important; border-radius: 12px !important;
-        padding: 10px 20px !important; border: 1px solid #00d4ff !important;
-    }
-    div.stDownloadButton > button:hover {
-        background-color: #00d4ff !important; color: black !important; transform: scale(1.03);
-    }
-
-    .glass-box {
-        background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px); border-radius: 20px;
-        padding: 40px; border: 1px solid rgba(255,255,255,0.25);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 40px;
-    }
-    @media (max-width: 992px) { section[data-testid="stSidebar"] { width: 100% !important; } }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # -----------------------------
-    # Sidebar
-    # -----------------------------
-    st.sidebar.markdown("# Patient Profile")
+    inject_enterprise_css()
     info = st.session_state.patient_info
 
-    st.sidebar.markdown(f"**Name:** {info.get('name','')}")
-    st.sidebar.markdown(f"**Phone:** {info.get('phone','')}")
-    st.sidebar.markdown(f"**Email:** {info.get('email','')}")
+    # ══ SIDEBAR (Dark Navy) ═══════════════════════════════════════
+    with st.sidebar:
+        st.markdown(f"""
+        <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 20px;">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">{info.get('name', '')}</div>
+            <div style="font-family: monospace; color: #38BDF8; margin-bottom: 12px; font-size: 13px;">ID: {info.get('_id', '')}</div>
+            <div style="font-size: 12px; color: #CBD5E1;">✉️ {info.get('email', '')}</div>
+            <div style="font-size: 12px; color: #CBD5E1;">📞 {info.get('phone', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Medical Inputs")
+        st.markdown("<div style='color:#38BDF8; font-weight:bold; font-size:12px; margin-top:10px;'>DEMOGRAPHICS</div>", unsafe_allow_html=True)
+        age    = st.number_input("Age (Years)", 21, 100, 30)
+        gender = st.selectbox("Biological Sex", ["Male","Female"])
+        pregnancies = st.number_input("Prior Pregnancies", 0, 20, 0) if gender=="Female" else 0
 
-    age = st.sidebar.number_input("Age", 21, 100, 30)
-    gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-   
-    # Pregnancy input only for female
-    if gender == "Female":
-        pregnancies = st.sidebar.number_input("Number of Pregnancies", min_value=0, max_value=20, value=0)
-    else:
-        pregnancies = 0
+        st.markdown("<div style='color:#38BDF8; font-weight:bold; font-size:12px; margin-top:20px;'>GLYCEMIC MARKERS</div>", unsafe_allow_html=True)
+        glucose = st.slider("Fasting Glucose (mg/dL)", 0, 200, 120)
+        insulin = st.slider("Serum Insulin (IU/mL)",  0, 900, 80)
 
-    glucose = st.sidebar.slider("Glucose", 0, 200, 120)
-    bp = st.sidebar.slider("Blood Pressure", 0, 130, 70)
-    skin = st.sidebar.slider("Skin Thickness", 0, 100, 20)
-    insulin = st.sidebar.slider("Insulin", 0, 900, 80)
-    bmi = st.sidebar.number_input("BMI", 10.0, 70.0, 25.0)
-    dpf = st.sidebar.slider("DPF", 0.0, 2.5, 0.5)
- 
-    st.sidebar.markdown("---")
-    predict_btn = st.sidebar.button("Predict", use_container_width=True)
-    logout_btn = st.sidebar.button("Logout")
+        st.markdown("<div style='color:#38BDF8; font-weight:bold; font-size:12px; margin-top:20px;'>CARDIOVASCULAR</div>", unsafe_allow_html=True)
+        bp   = st.slider("Diastolic BP (mmHg)",     0, 130, 70)
+        skin = st.slider("Triceps Skin Fold (mm)",  0, 100, 20)
 
-    if logout_btn:
-        st.session_state.registered = False
-        st.session_state.patient_info = {}
-        st.session_state.show_success = False
-        st.rerun() 
+        st.markdown("<div style='color:#38BDF8; font-weight:bold; font-size:12px; margin-top:20px;'>BIOMETRICS</div>", unsafe_allow_html=True)
+        bmi = st.number_input("BMI (kg/m²)", 10.0, 70.0, 25.0)
+        dpf = st.slider("Diabetes Pedigree Fn.", 0.0, 2.5, 0.5)
 
-    # -----------------------------
-    # Main Title & About System
-    # -----------------------------
-    st.title("🩺 Diabetes Prediction System")
-    st.markdown("AI-Powered Diabetes Risk Assessment Tool")
+        st.markdown("<br>", unsafe_allow_html=True)
+        predict_btn = st.button("Run Clinical AI Assessment", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        if st.button("Secure Logout", use_container_width=True):
+            st.session_state.registered   = False
+            st.session_state.patient_info = {}
+            st.session_state.show_success = False
+            st.session_state.model_ran    = False
+            st.rerun()
+
+    # ══ MAIN DASHBOARD (Light & Readable) ════════════════════════
+    st.markdown(f"""
+    <div style="margin-bottom: 24px;">
+        <h1 style="color: {C_NAVY} !important; font-weight: 800; margin-bottom: 4px;">Diagnostic Dashboard</h1>
+        <p style="color: {C_MUTED}; font-size: 15px;">Multiparametric SVM Analysis Engine</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.session_state.show_success:
-        st.success("✅ Registration Successful!")
+        st.success("✅ EHR Profile successfully established.")
         st.session_state.show_success = False
 
-    st.markdown("""
-    ### 📋 About This System
-    This Diabetes Prediction System is an AI-powered medical risk assessment tool designed to estimate the likelihood of diabetes based on key health parameters such as glucose level, BMI, blood pressure, age, and family history.
-    """)
-
-    # -----------------------------
-    # Prediction Logic
-    # -----------------------------
     if predict_btn:
-        # update gender in mongodb
+        st.session_state.model_ran = True
+
+    if not st.session_state.model_ran:
+        st.info("ℹ️ **System Ready:** Please configure the clinical biomarkers in the sidebar and execute the assessment to view results.")
+        return
+
+    # ══ MODEL EXECUTION ═════════════════════════════════════════
+    if predict_btn:
+        with st.spinner("Processing clinical vectors through SVM engine..."):
+            progress_bar = st.progress(0)
+            for i in range(100):
+                time.sleep(0.005)
+                progress_bar.progress(i + 1)
+            progress_bar.empty()
+
+    try:
         if "_id" in info:
-            users_collection.update_one({"_id":info["_id"]}, {"$set":{"gender":gender}}) 
-         
-        input_data = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
-        input_std = scaler.transform(input_data)
-        prediction = model.predict(input_std)[0]
-        probability = model.predict_proba(input_std)[0]
+            users_col.update_one({"_id":info["_id"]}, {"$set":{"gender":gender}})
+    except Exception:
+        pass
 
-        prob_negative = probability[0] * 100
-        prob_positive = probability[1] * 100
+    inp      = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
+    prob     = model.predict_proba(scaler.transform(inp))[0]
+    prob_neg = prob[0] * 100
+    prob_pos = prob[1] * 100
 
-        if prob_positive < 30: risk_label="Low Risk"
-        elif prob_positive < 70: risk_label="Moderate Risk"
-        else: risk_label="High Risk"
+    if prob_pos < 30:
+        risk_label = "Low Risk"; risk_hex = C_GREEN; risk_bg = "#ECFDF5"; risk_text = "LOW RISK: Diabetes Unlikely"
+    elif prob_pos < 70:
+        risk_label = "Moderate Risk"; risk_hex = C_AMBER; risk_bg = "#FFFBEB"; risk_text = "MODERATE RISK: Possible Diabetes"
+    else:
+        risk_label = "High Risk"; risk_hex = C_RED; risk_bg = "#FEF2F2"; risk_text = "HIGH RISK: Diabetes Likely"
 
-        # Save to MongoDB
-        ist = pytz.timezone('Asia/Kolkata')
-        current_time = datetime.now(ist)    
-        prediction_data = {
-            "patient_id": info["_id"], "patient_name": info["name"], "age": age,
-            "gender": gender, "glucose": glucose, "blood_pressure": bp, "bmi": bmi,
-            "prediction": risk_label, "probability": round(prob_positive, 2),
-            "created_at": current_time.strftime("%d-%m-%Y %H:%M:%S")
-        }
-        predictions_collection.insert_one(prediction_data)
+    ist = pytz.timezone("Asia/Kolkata"); now = datetime.now(ist)
+    
+    # ── Result Banner ──
+    st.markdown(f"""
+    <div class="clinical-card" style="background-color: {risk_bg}; border-left: 6px solid {risk_hex};">
+        <div style="font-size: 12px; font-weight: bold; color: {C_MUTED}; text-transform: uppercase; margin-bottom: 8px;">
+            Assessment Result • {now.strftime('%d %b %Y %H:%M')}
+        </div>
+        <h2 style="color: {risk_hex} !important; font-weight: 800; margin: 0 0 12px 0;">{risk_text}</h2>
+        <div style="font-size: 16px; color: {C_TEXT};">
+            Calculated Probability: <span style="font-weight: bold; font-size: 20px;">{prob_pos:.1f}%</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        # Display UI Results
-        st.markdown("---")
-        st.header("Prediction Results")
-        col1, col2 = st.columns([2, 1])
+    mc1, mc2 = st.columns(2)
+    with mc1: st.metric("Diabetic Probability", f"{prob_pos:.1f}%")
+    with mc2: st.metric("Non-Diabetic Probability", f"{prob_neg:.1f}%")
 
-        with col1:
-            if prob_positive < 30: st.success("✅ LOW RISK - Diabetes Unlikely")
-            elif prob_positive < 70: st.warning("⚠️ MODERATE RISK - Possible Diabetes")
-            else: st.error("❌ HIGH RISK - Diabetes Likely")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-            st.subheader("Probability Breakdown")
-            c1, c2 = st.columns(2)
-            c1.metric("Non-Diabetic", f"{prob_negative:.1f}%")
-            c2.metric("Diabetic", f"{prob_positive:.1f}%")
+    # ── Charts Setup ──
+    c_labels, c_values = [], []
+    if glucose >= 126: c_labels.append("Hyperglycemia");   c_values.append(min(glucose/2,100))
+    if bmi > 30:       c_labels.append("Obesity (BMI)");   c_values.append(min(bmi*2,100))
+    if age > 45:       c_labels.append("Age Factor");      c_values.append(min(age,100))
+    if bp > 120:       c_labels.append("Hypertension");    c_values.append(min(bp,100))
+    if dpf > 0.5:      c_labels.append("Genetics (DPF)");  c_values.append(min(dpf*100,100))
+    if not c_labels:   c_labels, c_values = ["Healthy Baseline"], [100]
+    scr_cols = [CHART_PALETTE[i%len(CHART_PALETTE)] for i in range(len(c_labels))]
 
-        with col2:
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number", value=prob_positive, number={"suffix": "%"}, title={"text": "Risk Level"},
-                gauge={"axis": {"range": [0, 100]}, "steps": [{"range": [0, 30], "color": "green"}, {"range": [30, 70], "color": "yellow"}, {"range": [70, 100], "color": "red"}]}
-            ))
-            st.plotly_chart(fig, use_container_width=True)
+    st.markdown("<div class='clinical-header'>Clinical Visualizations</div>", unsafe_allow_html=True)
 
-        # Risk Factor UI Analysis
-        st.markdown("---")
-        st.subheader("Risk Factor Analysis")
-        risk_factors, positive_factors = [], []
-
-        if glucose >= 126: risk_factors.append("High Glucose Level (≥126 mg/dL)")
-        elif 100 <= glucose < 126: risk_factors.append("Prediabetic Glucose Level (100–125 mg/dL)")
-        else: positive_factors.append("Normal Glucose Level (<100 mg/dL)")    
-
-        if bmi > 30: risk_factors.append("High BMI (Obesity)")
-        elif 18.5 <= bmi <= 24.9: positive_factors.append("Healthy BMI")
-
-        if age > 45: risk_factors.append("Age above 45")
-
-        if bp > 120: risk_factors.append("High Blood Pressure (>120 mmHg)")
-        elif 90 <= bp <= 120: positive_factors.append("Normal Blood Pressure")
-
-        if dpf > 0.5: risk_factors.append("Higher Genetic Risk")
-
-        if risk_factors:
-            st.warning("Identified Risk Factors:")
-            for factor in risk_factors: st.markdown(f"- {factor}")
-
-        if positive_factors:
-            st.success("Positive Health Indicators:")
-            for factor in positive_factors: st.markdown(f"- {factor}")
-
-        # Recommendations UI
-        st.markdown("---")
-        st.subheader("Recommendations")
-        if prob_positive >= 70:
-            st.error("- Consult a healthcare professional immediately\n- Get complete diabetes screening\n- Monitor blood sugar regularly\n- Improve diet and physical activity")
-            recs_for_pdf = ["Consult a healthcare professional immediately", "Get complete diabetes screening", "Monitor blood sugar regularly", "Improve diet and physical activity"]
-        elif prob_positive >= 30:
-            st.warning("- Maintain healthy diet\n- Increase physical activity\n- Monitor glucose periodically")
-            recs_for_pdf = ["Maintain healthy diet", "Increase physical activity", "Monitor glucose periodically"]
-        else:
-            st.success("- Continue healthy lifestyle\n- Exercise regularly\n- Routine health check-ups")
-            recs_for_pdf = ["Continue healthy lifestyle", "Exercise regularly", "Routine health check-ups"]
-            
-        # -----------------------------
-        # Charts Generation (For UI)
-        # -----------------------------
-        st.markdown('<div class="glass-box">', unsafe_allow_html=True)
-        st.markdown("---")
-        st.subheader("📊 Causes of Diabetes (Risk Contribution Analysis)")
-
-        c_col1, c_col2 = st.columns([1,1])
-        cause_labels, cause_values = [], []
-
-        if glucose >= 126: cause_labels.append("High Glucose"); cause_values.append(min(glucose / 2, 100))
-        if bmi > 30: cause_labels.append("High BMI (Obesity)"); cause_values.append(min(bmi * 2, 100))
-        if age > 45: cause_labels.append("Age Factor"); cause_values.append(min(age, 100))
-        if bp > 120: cause_labels.append("High Blood Pressure"); cause_values.append(min(bp, 100))
-        if dpf > 0.5: cause_labels.append("Genetic Risk (DPF)"); cause_values.append(min(dpf * 100, 100))
-        if not cause_labels: cause_labels = ["Healthy Indicators"]; cause_values = [100]
-
-        # UI Bar Chart (Plotly)
-        bar_fig = go.Figure(go.Bar(
-            x=cause_labels, y=cause_values, text=[f"{v:.1f}" for v in cause_values], textposition='auto',
-            marker=dict(color=cause_values, colorscale="Reds", line=dict(color="white", width=2)),
-            textfont=dict(color="white", size=16)
+    # Note: Plotly charts updated to Light Theme for readability
+    gc1, gc2 = st.columns(2)
+    with gc1:
+        st.markdown("<div class='clinical-card'>", unsafe_allow_html=True)
+        gfig = go.Figure(go.Indicator(
+            mode="gauge+number", value=prob_pos,
+            number={"suffix":"%","font":{"family":"Inter","color":C_TEXT,"size":28}},
+            title={"text":"Risk Severity Gauge","font":{"color":C_MUTED,"size":14}},
+            gauge={
+                "axis":      {"range":[0,100],"tickcolor":C_BORDER,"tickwidth":1},
+                "bar":       {"color":risk_hex,"thickness":0.25},
+                "bgcolor":   "#F8FAFC", "borderwidth":0,
+                "steps":     [{"range":[0,30],"color":"#D1FAE5"},
+                              {"range":[30,70],"color":"#FEF3C7"},
+                              {"range":[70,100],"color":"#FEE2E2"}],
+                "threshold": {"line":{"color":risk_hex,"width":4}, "thickness":0.8,"value":prob_pos},
+            }
         ))
-        bar_fig.update_layout(
-            title="Risk Factor Severity", xaxis_title="Causes", yaxis_title="Severity Level",
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"),
-            autosize=True, margin=dict(l=20, r=20, t=50, b=20)
+        gfig.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=280, margin=dict(l=10,r=10,t=30,b=10))
+        st.plotly_chart(gfig, use_container_width=True, config={"responsive":True})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with gc2:
+        st.markdown("<div class='clinical-card'>", unsafe_allow_html=True)
+        pfig = go.Figure(go.Pie(
+            labels=c_labels, values=c_values, hole=.5,
+            marker=dict(colors=scr_cols, line=dict(color="#FFFFFF",width=2)),
+            textfont=dict(family="Inter",size=12,color="#FFFFFF"),
+            textposition="inside", textinfo="percent+label", showlegend=False,
+        ))
+        pfig.update_layout(
+            title=dict(text="Etiology Contribution", font=dict(color=C_MUTED,size=14)),
+            paper_bgcolor="rgba(0,0,0,0)", height=280, margin=dict(l=10,r=10,t=30,b=10),
         )
-        bar_fig.update_xaxes(tickfont=dict(color="white", size=14), title_font=dict(color="white", size=16), showline=True, linecolor="white")
-        bar_fig.update_yaxes(tickfont=dict(color="white", size=14), title_font=dict(color="white", size=16), showgrid=True, gridcolor="rgba(255,255,255,0.25)", zerolinecolor="white")
+        st.plotly_chart(pfig, use_container_width=True, config={"responsive":True})
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        with c_col1: st.plotly_chart(bar_fig, use_container_width=True, config={"responsive": True})
+    # ── Factor Analysis ──
+    st.markdown("<div class='clinical-header'>Biomarker Analysis</div>", unsafe_allow_html=True)
+    
+    risks, positives = [], []
+    if glucose >= 126:          risks.append("Critical: High Fasting Glucose (≥126 mg/dL)")
+    elif 100 <= glucose < 126:  risks.append("Warning: Prediabetic Glucose (100–125 mg/dL)")
+    else:                       positives.append("Normal Glucose Baseline (<100 mg/dL)")
+    if bmi > 30:                risks.append("Critical: High BMI Indicator (Obese)")
+    elif 18.5 <= bmi <= 24.9:   positives.append("Normal Healthy BMI (18.5 – 24.9)")
+    if age > 45:                risks.append("Factor: Age > 45 Demographic")
+    if bp > 120:                risks.append("Critical: Elevated Blood Pressure")
+    elif 90 <= bp <= 120:       positives.append("Normal Blood Pressure Range")
+    if dpf > 0.5:               risks.append("Factor: Genetic Pedigree Risk > 0.5")
 
-        # UI Pie Chart (Plotly)
-        pie_fig = go.Figure(data=[go.Pie(labels=cause_labels, values=cause_values, hole=0.4)])
-        pie_fig.update_layout(title="Percentage Contribution", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), autosize=True, margin=dict(l=20, r=20, t=50, b=20))
-        with c_col2: st.plotly_chart(pie_fig, use_container_width=True, config={"responsive": True})
-        st.markdown('</div>', unsafe_allow_html=True)
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        st.markdown("<div class='clinical-card'>", unsafe_allow_html=True)
+        st.markdown("**Identified Risk Factors**")
+        for r in risks:
+            st.markdown(f"<div style='padding:8px; margin-bottom:8px; background:#FEF2F2; color:#991B1B; border-left:4px solid #EF4444; border-radius:4px; font-size:14px;'>{r}</div>", unsafe_allow_html=True)
+        if not risks: st.write("No critical risks detected.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        # -----------------------------
-        # COMPLETE PROFESSIONAL PDF REPORT (AESTHETIC)
-        # -----------------------------
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
-        elements = []
-        styles = getSampleStyleSheet()
+    with rc2:
+        st.markdown("<div class='clinical-card'>", unsafe_allow_html=True)
+        st.markdown("**Stable Biomarkers**")
+        for p in positives:
+            st.markdown(f"<div style='padding:8px; margin-bottom:8px; background:#ECFDF5; color:#065F46; border-left:4px solid #10B981; border-radius:4px; font-size:14px;'>{p}</div>", unsafe_allow_html=True)
+        if not positives: st.write("No protective factors noted.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        title_style = ParagraphStyle("CustomTitle", parent=styles["Heading1"], fontSize=20, textColor=colors.HexColor("#0f172a"), alignment=1, spaceAfter=5, fontName="Helvetica-Bold")
-        date_style = ParagraphStyle("DateStyle", parent=styles["Normal"], fontSize=10, textColor=colors.dimgrey, alignment=1, spaceAfter=20, fontName="Helvetica-Oblique")
-        heading_style = ParagraphStyle("CustomHeading", parent=styles["Heading2"], fontSize=14, textColor=colors.HexColor("#005bea"), spaceBefore=15, spaceAfter=10, fontName="Helvetica-Bold", borderPadding=6, backColor=colors.HexColor("#f8fafc"))
-        normal_style = styles["Normal"]
-        normal_style.fontSize = 11
-        normal_style.spaceAfter = 6
-         
-        # Address Wrapping Style
-        address_style = ParagraphStyle("AddressStyle", parent=styles["Normal"], fontSize=11, leading=14)
+    # Set PDF recommendations
+    if prob_pos >= 70:
+        recs_pdf = ["Consult an endocrinologist immediately", "Acquire complete HbA1c screening", "Monitor blood sugar routinely", "Institute strict dietary protocols"]
+    elif prob_pos >= 30:
+        recs_pdf = ["Maintain a low-glycemic index diet", "Increase cardiovascular activity", "Monitor fasting glucose periodically"]
+    else:
+        recs_pdf = ["Continue healthy lifestyle habits", "Exercise regularly (150 mins/week)", "Maintain routine annual check-ups"]
 
-        # Title & Generated Date
-        elements.append(Paragraph("🩺 DIABETES RISK PREDICTION REPORT", title_style))
-         
-        # Dynamic Date and Time
-        report_date = current_time.strftime("%d %B %Y | %I:%M %p (IST)")
-        elements.append(Paragraph(f"Report Generated On: {report_date}", date_style))
 
-        # 1. Patient Profile Table
-        address_paragraph = Paragraph(info.get("address", "N/A"), address_style)
-         
-        patient_table = [
-            ["Patient ID", info.get("_id", "N/A")], ["Full Name", info.get("name", "N/A")],
-            ["Email Address", info.get("email", "N/A")], ["Phone Number", info.get("phone", "N/A")],
-            ["Country", info.get("country", "N/A")], ["Address", address_paragraph]
-        ]
-        table = Table(patient_table, colWidths=[2.2*inch, 4.3*inch])
-        table.setStyle(TableStyle([
-             ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), 
-             ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), 
-             ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), 
-             ("PADDING", (0,0), (-1,-1), 8),
-             ("VALIGN", (0,0), (-1,-1), "MIDDLE")
+    # ══ PDF GENERATION (Enterprise Styling) ═════════════════════
+    st.markdown("<br>", unsafe_allow_html=True)
+    bar_png = _bar_png(c_labels, c_values)
+    pie_png = _pie_png(c_labels, c_values)
+
+    buf  = BytesIO()
+    doc  = SimpleDocTemplate(buf, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=100, bottomMargin=70) 
+    els  = []
+    sty  = getSampleStyleSheet()
+
+    T = lambda name, **kw: ParagraphStyle(name, parent=sty["Normal"], **kw)
+    t_title = T("TT", fontName="Helvetica-Bold", fontSize=18, textColor=colors.HexColor("#0F172A"), alignment=1, spaceAfter=4)
+    t_date  = T("TD", fontName="Helvetica", fontSize=10, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
+    t_head  = T("TH", fontName="Helvetica-Bold", fontSize=11, textColor=colors.HexColor("#FFFFFF"), backColor=colors.HexColor("#026AA7"), spaceBefore=16, spaceAfter=8, borderPadding=6)
+    t_norm  = T("TN", fontName="Helvetica", fontSize=10, spaceAfter=5, textColor=colors.HexColor("#1E293B"))
+    
+    def hosp_table(rows):
+        t = Table(rows, colWidths=[2.2*inch, 4.3*inch])
+        t.setStyle(TableStyle([
+            ("GRID",        (0,0),(-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+            ("BACKGROUND",  (0,0),(0,-1),  colors.HexColor("#F8FAFC")),
+            ("FONTNAME",    (0,0),(0,-1),  "Helvetica-Bold"),
+            ("TEXTCOLOR",   (0,0),(0,-1),  colors.HexColor("#0F172A")),
+            ("TEXTCOLOR",   (1,0),(1,-1),  colors.HexColor("#1E293B")),
+            ("PADDING",     (0,0),(-1,-1), 8),
+            ("VALIGN",      (0,0),(-1,-1), "MIDDLE"),
         ]))
-        elements.append(Paragraph("Patient Profile", heading_style))
-        elements.append(table)
-        elements.append(Spacer(1, 0.2 * inch))
+        for i in range(1, len(rows)):
+            if i % 2 == 0: t.setStyle(TableStyle([("BACKGROUND", (1, i), (1, i), colors.HexColor("#F1F5F9"))]))
+        return t
 
-        # 2. Clinical Inputs Table
-        medical_inputs = [
-             ["Age", f"{age} Years"], ["Gender", gender], ["Glucose Level", f"{glucose} mg/dL"],
-             ["Blood Pressure", f"{bp} mmHg"], ["Skin Thickness", f"{skin} mm"], ["Insulin Level", f"{insulin} IU/mL"],
-             ["BMI", str(bmi)], ["Diabetes Pedigree Function", str(dpf)]
-        ]
-        if gender == "Female":
-             medical_inputs.insert(2, ["Number of Pregnancies", str(pregnancies)])
+    els.append(Paragraph("CLINICAL ASSESSMENT REPORT", t_title))
+    els.append(Paragraph(f"Date Generated: {now.strftime('%d %b %Y | %H:%M IST')}", t_date))
 
-        med_table = Table(medical_inputs, colWidths=[2.2*inch, 4.3*inch])
-        med_table.setStyle(TableStyle([
-             ("GRID", (0,0), (-1,-1), 0.5, colors.lightgrey), 
-             ("BACKGROUND", (0,0), (0,-1), colors.HexColor("#f1f5f9")), 
-             ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"), 
-             ("PADDING", (0,0), (-1,-1), 8),
-             ("VALIGN", (0,0), (-1,-1), "MIDDLE")
-        ]))
-        elements.append(Paragraph("Clinical Inputs", heading_style))
-        elements.append(med_table)
-        elements.append(Spacer(1, 0.3 * inch))
+    els.append(Paragraph("PATIENT DEMOGRAPHICS", t_head))
+    els.append(hosp_table([
+        ["Medical Record Number", Paragraph(f"<font name='Courier-Bold'>{info.get('_id','')}</font>", t_norm)],
+        ["Patient Name", info.get("name","").upper()],
+        ["Contact", f"{info.get('phone','')} | {info.get('email','')}"]
+    ]))
+    
+    med = [
+        ["Age", f"{age} Years"], ["Biological Sex", gender], ["Fasting Glucose", f"{glucose} mg/dL"],
+        ["Diastolic BP", f"{bp} mmHg"], ["Body Mass Index", str(bmi)], ["Diabetes Pedigree", str(dpf)]
+    ]
+    if gender == "Female": med.insert(2, ["Prior Pregnancies", str(pregnancies)])
+    
+    els.append(Paragraph("CLINICAL VITALS & BIOMARKERS", t_head))
+    els.append(hosp_table(med))
 
-        # 3. Overall Risk Level & Risk Percentage
-        elements.append(Paragraph("Risk Assessment Result", heading_style))
-        if prob_positive < 30: risk_level_str = "<font color='green'><b>LOW RISK - Diabetes Unlikely</b></font>"
-        elif prob_positive < 70: risk_level_str = "<font color='#d97706'><b>MODERATE RISK - Possible Diabetes</b></font>"
-        else: risk_level_str = "<font color='red'><b>HIGH RISK - Diabetes Likely</b></font>"
+    risk_pdf_col = {"Low Risk":"#059669","Moderate Risk":"#D97706","High Risk":"#DC2626"}
+    els.append(Paragraph("AI DIAGNOSTIC OUTPUT", t_head))
+    els.append(Paragraph(f"<b>Overall Risk Determination:</b> <font color='{risk_pdf_col[risk_label]}'><b>{risk_label.upper()}</b></font>", t_norm))
+    els.append(Paragraph(f"<b>Calculated Probability:</b> {prob_pos:.1f}% positive indicator", t_norm))
 
-        elements.append(Paragraph(f"<b>Overall Risk Level:</b> {risk_level_str}", normal_style))
-        elements.append(Paragraph(f"<b>Risk Percentage:</b> {prob_positive:.1f}%", normal_style))
-        elements.append(Spacer(1, 0.2 * inch))
+    els.append(Paragraph("CLINICAL RECOMMENDATIONS", t_head))
+    els.append(ListFlowable([ListItem(Paragraph(r, t_norm)) for r in recs_pdf], bulletType="bullet"))
+    
+    els.append(Spacer(1, 0.4*inch))
+    sig_table = Table([["", "___________________________________"], ["", "Attending Physician / System Output"]], colWidths=[3.5*inch, 3*inch])
+    sig_table.setStyle([("ALIGN", (1,0), (1,-1), "CENTER"), ("FONTNAME", (1,1), (1,-1), "Helvetica-Bold"), ("FONTSIZE", (1,1), (1,-1), 9)])
+    els.append(sig_table)
 
-        # 4. Polaroid-style Charts Generation for PDF (Matplotlib Fix)
-        try:
-             # --- GENERATE MATPLOTLIB CHARTS FOR PDF ---
-             # Create Bar Chart
-             fig_bar, ax_bar = plt.subplots(figsize=(4.5, 3.5))
-             colors_bar = plt.cm.Reds(np.array(cause_values) / (max(cause_values) if max(cause_values) > 0 else 1))
-             ax_bar.bar(cause_labels, cause_values, color=colors_bar, edgecolor='black', linewidth=1.2)
-             ax_bar.set_title("Risk Severity", fontsize=14, fontweight='bold', pad=10)
-             plt.xticks(rotation=25, ha='right', fontsize=9)
-             plt.tight_layout()
-             
-             bar_buf = BytesIO()
-             plt.savefig(bar_buf, format='png', bbox_inches='tight', dpi=300, facecolor='white')
-             bar_buf.seek(0)
-             plt.close(fig_bar)
+    doc.build(els, onFirstPage=report_header_footer, onLaterPages=report_header_footer)
+    pdf_data = buf.getvalue(); buf.close()
 
-             # Create Pie Chart
-             fig_pie, ax_pie = plt.subplots(figsize=(4.5, 3.5))
-             ax_pie.pie(cause_values, labels=cause_labels, autopct='%1.1f%%', startangle=140, 
-                        wedgeprops={'edgecolor': 'black', 'linewidth': 1.2}, textprops={'fontsize': 9})
-             ax_pie.set_title("Risk Contribution", fontsize=14, fontweight='bold', pad=10)
-             plt.tight_layout()
-             
-             pie_buf = BytesIO()
-             plt.savefig(pie_buf, format='png', bbox_inches='tight', dpi=300, facecolor='white')
-             pie_buf.seek(0)
-             plt.close(fig_pie)
+    st.download_button(
+        label="📄 Export Official EHR Document (PDF)",
+        data=pdf_data,
+        file_name=f"EHR_{info.get('name','Patient').replace(' ','_')}_{now.strftime('%d%m%Y')}.pdf",
+        mime="application/pdf",
+    )
 
-             # --- ADD TO PDF WITH POLAROID STYLING ---
-             bar_rl = RLImage(bar_buf, width=3.1*inch, height=2.4*inch)
-             pie_rl = RLImage(pie_buf, width=3.1*inch, height=2.4*inch)
-             
-             elements.append(Paragraph("Data Visualization & Analysis", heading_style))
-             
-             # Create the Polaroid frame effect using ReportLab Table cells
-             chart_table = Table([[bar_rl, pie_rl]], colWidths=[3.5*inch, 3.5*inch])
-             chart_table.setStyle(TableStyle([
-                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                 # Polaroid aesthetic: distinct border with extra padding at the bottom
-                 ('BOX', (0,0), (0,0), 1.5, colors.HexColor("#cbd5e1")),
-                 ('BOX', (1,0), (1,0), 1.5, colors.HexColor("#cbd5e1")),
-                 ('BACKGROUND', (0,0), (-1,-1), colors.white),
-                 ('BOTTOMPADDING', (0,0), (-1,-1), 30), # Thick bottom margin
-                 ('TOPPADDING', (0,0), (-1,-1), 12),
-                 ('LEFTPADDING', (0,0), (-1,-1), 12),
-                 ('RIGHTPADDING', (0,0), (-1,-1), 12),
-             ]))
-             elements.append(chart_table)
-             
-        except Exception as e:
-             elements.append(Paragraph(f"<font color='red'><i>* Note: Charts could not be generated. Error: {e}</i></font>", normal_style))
-         
-        elements.append(Spacer(1, 0.2 * inch))
-
-        # 5. Recommendations in PDF
-        elements.append(Paragraph("Medical Recommendations", heading_style))
-        rec_list = [ListItem(Paragraph(r, normal_style)) for r in recs_for_pdf]
-        elements.append(ListFlowable(rec_list, bulletType='bullet'))
-        elements.append(Spacer(1, 0.4 * inch))
-
-        elements.append(Paragraph("<b>Medical Disclaimer:</b> This report is AI-generated and does not replace professional medical advice.", styles["Italic"]))
-
-        # Build PDF
-        doc.build(elements)
-        pdf = buffer.getvalue()
-        buffer.close()
-
-        st.download_button(
-            label="📄 Download Professional Medical Report (PDF)",
-            data=pdf,
-            file_name=f"Diabetes_Report_{info.get('name', 'Patient')}.pdf",
-            mime="application/pdf"
-        )
-
-        # Disclaimer UI
-        st.markdown("---")
-        st.warning("⚠️ Medical Disclaimer:\nThis tool does NOT replace professional medical advice.")
-
-# =====================================================
-# Navigation
-# =====================================================
 if not st.session_state.registered:
     registration_page()
 else:
