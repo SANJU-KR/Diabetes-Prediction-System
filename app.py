@@ -344,7 +344,7 @@ def build_hospital_pdf(info, age, gender, glucose, bp, skin, insulin, bmi, dpf,
         "Consult a qualified healthcare professional for clinical diagnosis, interpretation, and treatment.")
     c.setFont("Helvetica", 7)
     c.drawRightString(W - M, 7 * mm,
-        f"Diabetes Prediction System  |  {current_time.strftime('%d %B %Y')}  |  Page 1 of 1")
+        
 
     c.save()
     return buf.getvalue()
@@ -1083,3 +1083,4 @@ if not st.session_state.registered:
     registration_page()
 else:
     prediction_page()
+
